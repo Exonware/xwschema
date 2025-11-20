@@ -1,10 +1,10 @@
-name: Publish to PyPI
+name: Dual PyPI Publish - exonware-xwschema & xwschema
 
 on:
   push:
     tags:
       - 'v*'  # Triggers on version tags like v0.0.2, v1.0.0, etc.
-  workflow_dispatch:  # Allows manual trigger
+  workflow_dispatch:  # Allows manual trigger of the workflow
 
 jobs:
   publish:
@@ -23,11 +23,51 @@ jobs:
         python -m pip install --upgrade pip
         pip install build twine
     
-    - name: Build package
-      run: python -m build
+    - name: Build exonware-xwschema package
+      run: |
+        echo "Building exonware-xwschema package..."
+        python -m build
+        
+    - name: Build xwschema package
+      run: |
+        echo "Building xwschema package..."
+        cp pyproject.toml pyproject.backup.toml
+        cp pyproject.xwschema.toml pyproject.toml
+        python -m build
+        mv pyproject.backup.toml pyproject.toml
     
-    - name: Publish to PyPI
+    - name: List built packages
+      run: |
+        echo "Built packages:"
+        find dist -name "*.whl" -o -name "*.tar.gz" | sort
+    
+    - name: Publish exonware-xwschema to PyPI
       env:
         TWINE_USERNAME: __token__
         TWINE_PASSWORD: ${{ secrets.PYPI_API_TOKEN }}
-      run: twine upload dist/*
+      run: |
+        echo "Publishing exonware-xwschema to PyPI..."
+        ls -la dist/
+        twine upload dist/exonware_xwschema-*.whl dist/exonware_xwschema-*.tar.gz
+    
+    - name: Publish xwschema to PyPI
+      env:
+        TWINE_USERNAME: __token__
+        TWINE_PASSWORD: ${{ secrets.PYPI_API_TOKEN }}
+      run: |
+        echo "Publishing xwschema to PyPI..."
+        twine upload dist/xwschema-*.whl dist/xwschema-*.tar.gz
+        
+    - name: Success notification
+      run: |
+        echo "Successfully published both packages:"
+        echo "   exonware-xwschema v${{ github.ref_name }}"
+        echo "   xwschema v${{ github.ref_name }}"
+        echo ""
+        echo "PyPI URLs:"
+        echo "   https://pypi.org/project/exonware-xwschema/"
+        echo "   https://pypi.org/project/xwschema/"
+        echo ""
+        echo "Install with:"
+        echo "   pip install exonware-xwschema"
+        echo "   pip install xwschema"
