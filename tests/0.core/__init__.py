@@ -1,9 +1,9 @@
-""
-Integration tests for xschema
+"""
+Core functionality tests for xwschema
 
 Company: eXonware.com
 Author: Eng. Muhammad AlShehri
 Email: connect@exonware.com
 Version: 0.0.1
 Generation Date: February 2, 2025
-""
+"""

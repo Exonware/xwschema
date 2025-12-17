@@ -9,7 +9,7 @@ from typing import Any, Optional, Dict, List, Union
 from pathlib import Path
 import json
 
-from src.xlib.xsystem import get_logger
+from src.xlib.xwsystem import get_logger
 from .core.unified_utils import UnifiedUtils
 from .model import SchemaProcessor, ASchemaNode
 from .core.errors import XSchemaError, XSchemaValidationError, XSchemaGenerationError

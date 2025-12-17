@@ -3,11 +3,11 @@ requires = [ "hatchling",]
 build-backend = "hatchling.build"
 
 [project]
-name = "exonware-xschema"
+name = "exonware-xwschema"
 dynamic = ["version"]
 description = "Schema validation and data structure definition library"
 readme = "README.md"
-requires-python = ">=3.8"
+requires-python = ">=3.12"
 keywords = [ "schema", "validation", "structure", "definition", "data-types", "exonware",]
 classifiers = [ 
     "Development Status :: 3 - Alpha", 
@@ -15,15 +15,11 @@ classifiers = [
     "License :: OSI Approved :: MIT License", 
     "Operating System :: OS Independent", 
     "Programming Language :: Python :: 3", 
-    "Programming Language :: Python :: 3.8", 
-    "Programming Language :: Python :: 3.9", 
-    "Programming Language :: Python :: 3.10", 
-    "Programming Language :: Python :: 3.11", 
     "Programming Language :: Python :: 3.12", 
     "Topic :: Software Development :: Libraries :: Python Modules",
 ]
 dependencies = [
-    "exonware-xwsystem>=0.0.1",
+    "exonware-xwsystem",
     "boto3>=1.26.0",      # AWS Glue Schema Registry
     "requests>=2.28.0",   # HTTP client for Confluent Schema Registry
 ]
@@ -44,14 +40,18 @@ dev = [
     "isort>=5.12.0", 
     "mypy>=1.0.0",
 ]
-all = [
-    # Add optional dependencies here
+lazy = [
+    "exonware-xwsystem[lazy]",
+]
+full = [
+    # xwschema leverages xwsystem's full capabilities
+    "exonware-xwsystem[full]",
 ]
 
 [project.urls]
 Homepage = "https://exonware.com"
-Repository = "https://github.com/exonware/xschema"
-Documentation = "https://github.com/exonware/xschema#readme"
+Repository = "https://github.com/exonware/xwschema"
+Documentation = "https://github.com/exonware/xwschema#readme"
 
 [tool.black]
 line-length = 88
@@ -62,7 +62,7 @@ profile = "black"
 line_length = 88
 
 [tool.mypy]
-python_version = "0.0.1.1"
+python_version = "0.0.1.2"
 strict = true
 warn_return_any = true
 warn_unused_configs = true
@@ -83,11 +83,11 @@ testpaths = [ "tests",]
 python_files = [ "test_*.py",]
 python_classes = [ "Test*",]
 python_functions = [ "test_*",]
-addopts = "-v --tb=short"
+addopts = "-v --tb=short -x --strict-markers"
 markers = [ 
-    "xschema_core: Core functionality tests", 
-    "xschema_unit: Unit tests for individual components", 
-    "xschema_integration: Integration tests between components", 
+    "xwschema_core: Core functionality tests (20% tests for 80% value)", 
+    "xwschema_unit: Unit tests for individual components", 
+    "xwschema_integration: Integration tests between components", 
 ]
 
 [tool.hatch.version]
@@ -95,7 +95,7 @@ path = "src/exonware/xwschema/version.py"
 
 [tool.hatch.build.targets.wheel]
 packages = [ "src/exonware",]
-py-modules = [ "src/xschema",]
+py-modules = [ "src/xwschema",]
 
 [tool.hatch.build.targets.sdist]
 include = [ 

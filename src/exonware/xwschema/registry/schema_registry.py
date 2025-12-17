@@ -2,7 +2,7 @@
 Company: eXonware.com
 Author: Eng. Muhammad AlShehri
 Email: connect@exonware.com
-Version: 0.0.1.1
+Version: 0.0.1.2
 Generation Date: September 04, 2025
 
 Schema Registry Integration for Enterprise Serialization
@@ -16,18 +16,25 @@ Provides integration with enterprise schema registries for:
 
 import json
 from abc import abstractmethod
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Optional, Union
 from dataclasses import dataclass
 from .base import ASchemaRegistry
 from .errors import SchemaRegistryError, SchemaNotFoundError, SchemaValidationError
 from .defs import CompatibilityLevel
+from exonware.xwsystem import get_logger
 
-import requests
-import boto3
+# Optional dependencies
+try:
+    import requests
+except ImportError:
+    requests = None
 
-from ...config.logging_setup import get_logger
+try:
+    import boto3
+except ImportError:
+    boto3 = None
 
-logger = get_logger("xwsystem.io.serialization.schema_registry")
+logger = get_logger(__name__)
 
 
 @dataclass
@@ -41,18 +48,6 @@ class SchemaInfo:
     compatibility: Optional[CompatibilityLevel] = None
 
 
-    
-    @abstractmethod
-    async def check_compatibility(self, subject: str, schema: str) -> bool:
-        """Check if schema is compatible with latest version."""
-        pass
-    
-    @abstractmethod
-    async def set_compatibility(self, subject: str, level: CompatibilityLevel) -> None:
-        """Set compatibility level for subject."""
-        pass
-
-
 class ConfluentSchemaRegistry(ASchemaRegistry):
     """Confluent Schema Registry implementation."""
     
@@ -60,7 +55,7 @@ class ConfluentSchemaRegistry(ASchemaRegistry):
         self,
         url: str,
         auth: Optional[tuple] = None,
-        headers: Optional[Dict[str, str]] = None,
+        headers: Optional[dict[str, str]] = None,
         timeout: float = 30.0
     ):
         """
@@ -72,7 +67,8 @@ class ConfluentSchemaRegistry(ASchemaRegistry):
             headers: Optional HTTP headers
             timeout: Request timeout in seconds
         """
-        # requests is now required
+        if requests is None:
+            raise ImportError("requests library is required for ConfluentSchemaRegistry. Install with: pip install requests")
         
         self.url = url.rstrip('/')
         self.auth = auth
@@ -176,7 +172,7 @@ class ConfluentSchemaRegistry(ASchemaRegistry):
         
         return await asyncio.to_thread(_get)
     
-    async def get_schema_versions(self, subject: str) -> List[int]:
+    async def get_schema_versions(self, subject: str) -> list[int]:
         """Get all versions for a subject."""
         import asyncio
         
@@ -282,7 +278,8 @@ class AwsGlueSchemaRegistry(ASchemaRegistry):
             aws_access_key_id: AWS access key ID
             aws_secret_access_key: AWS secret access key
         """
-        # boto3 is now required
+        if boto3 is None:
+            raise ImportError("boto3 library is required for AwsGlueSchemaRegistry. Install with: pip install boto3")
         
         self.registry_name = registry_name
         self.client = boto3.client(
@@ -373,7 +370,7 @@ class AwsGlueSchemaRegistry(ASchemaRegistry):
         
         return await asyncio.to_thread(_get)
     
-    async def get_schema_versions(self, subject: str) -> List[int]:
+    async def get_schema_versions(self, subject: str) -> list[int]:
         """Get all versions for a subject."""
         import asyncio
         
@@ -439,25 +436,21 @@ class SchemaRegistry:
         else:
             raise ValueError(f"Unsupported registry type: {registry_type}")
     
-    async def register_schema(self, subject: str, schema: str, schema_type: str = "JSON") -> int:
-        """Register a schema."""
+    async def register_schema(self, subject: str, schema: str, schema_type: str = "AVRO") -> SchemaInfo:
+        """Register a schema and return SchemaInfo."""
         return await self._registry.register_schema(subject, schema, schema_type)
     
-    async def get_schema(self, subject: str, version: Optional[int] = None) -> Optional[str]:
-        """Get a schema."""
-        return await self._registry.get_schema(subject, version)
-    
-    async def get_schema_by_id(self, schema_id: int) -> Optional[str]:
+    async def get_schema(self, schema_id: int) -> SchemaInfo:
         """Get schema by ID."""
-        return await self._registry.get_schema_by_id(schema_id)
+        return await self._registry.get_schema(schema_id)
     
-    async def list_subjects(self) -> List[str]:
-        """List all subjects."""
-        return await self._registry.list_subjects()
+    async def get_latest_schema(self, subject: str) -> SchemaInfo:
+        """Get latest schema version for subject."""
+        return await self._registry.get_latest_schema(subject)
     
-    async def get_versions(self, subject: str) -> List[int]:
+    async def get_schema_versions(self, subject: str) -> list[int]:
         """Get all versions for a subject."""
-        return await self._registry.get_versions(subject)
+        return await self._registry.get_schema_versions(subject)
     
     async def check_compatibility(self, subject: str, schema: str) -> bool:
         """Check schema compatibility."""
@@ -466,4 +459,3 @@ class SchemaRegistry:
     async def set_compatibility(self, subject: str, level: CompatibilityLevel) -> None:
         """Set compatibility level."""
         await self._registry.set_compatibility(subject, level)
-

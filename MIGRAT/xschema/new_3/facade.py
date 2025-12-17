@@ -14,7 +14,7 @@ from pathlib import Path
 from .model.base import xDataNode
 from .factory.factory import xDataFactory
 from .performance.hashing import structural_hash, fast_equality_check
-from src.xlib.xsystem import get_logger
+from src.xlib.xwsystem import get_logger
 from src.xlib.xdata.core.exceptions import ParsingError, SerializationError
 from src.xlib.xdata.standard_abc import xDataBase
 
@@ -583,7 +583,7 @@ class xData(xDataBase):
             # Write file with safety features
             if atomic:
                 # Use atomic file operations
-                from src.xlib.xsystem.io.atomic_file import AtomicFileWriter
+                from src.xlib.xwsystem.io.atomic_file import AtomicFileWriter
                 with AtomicFileWriter(file_path, backup=backup) as writer:
                     if isinstance(serialized_content, str):
                         writer.write(serialized_content)

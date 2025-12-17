@@ -56,7 +56,7 @@ def verify_installation():
         
     except ImportError as e:
         print(f"❌ Import Error: {e}")
-        print("💡 Make sure you've installed the package with: pip install exonware-xschema")
+        print("💡 Make sure you've installed the package with: pip install exonware-xwschema")
         return False
     except Exception as e:
         print(f"❌ Unexpected Error: {e}")

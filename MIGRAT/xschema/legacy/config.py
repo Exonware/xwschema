@@ -9,10 +9,10 @@ from dataclasses import dataclass, field
 from typing import Any, Dict, Optional, Union
 
 from src.xlib.xdata.core.enums import RefLoad, RefResolve, RefCopy
-from src.xlib.xsystem.monitoring.performance_monitor import logger, create_performance_monitor
-from src.xlib.xsystem.security.path_validator import PathValidator
-from src.xlib.xsystem.threading.locks import EnhancedRLock
-from src.xlib.xsystem.structures.circular_detector import CircularReferenceDetector
+from src.xlib.xwsystem.monitoring.performance_monitor import logger, create_performance_monitor
+from src.xlib.xwsystem.security.path_validator import PathValidator
+from src.xlib.xwsystem.threading.locks import EnhancedRLock
+from src.xlib.xwsystem.structures.circular_detector import CircularReferenceDetector
 
 # Constants for schema operations
 DEFAULT_MAX_FILE_SIZE_MB = 100.0
@@ -37,7 +37,7 @@ SCHEMA_TYPE_MAPPING = {
 
 # Forward declarations for type hints
 if False:  # TYPE_CHECKING
-    from ...xsystem.monitoring.performance_monitor import PerformanceMonitor
+    from ...xwsystem.monitoring.performance_monitor import PerformanceMonitor
 
 
 @dataclass(frozen=True)

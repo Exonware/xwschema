@@ -13,7 +13,7 @@ from collections.abc import MutableMapping
 from .config import xSchemaConfig
 from .validation import SchemaValidationService
 from src.xlib.xdata.core.exceptions import SchemaError, SchemaValidationError
-from src.xlib.xsystem.monitoring.performance_monitor import logger
+from src.xlib.xwsystem.monitoring.performance_monitor import logger
 # Import legacy xData directly to ensure compatibility
 from src.xlib.xdata.data.facade import xData
 

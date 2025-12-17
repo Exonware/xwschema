@@ -11,7 +11,7 @@ from typing import Any, Dict, Optional, List, Union, Callable, get_type_hints, g
 from functools import wraps
 from datetime import datetime
 
-from src.xlib.xsystem import get_logger
+from src.xlib.xwsystem import get_logger
 from src.xlib.xdata import xData
 
 logger = get_logger(__name__)

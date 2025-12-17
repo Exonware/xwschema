@@ -28,7 +28,7 @@ Performance Results (Latest):
 Dependencies:
 - pytest
 - psutil
-- xlib.xsystem (for logging)
+- xlib.xwsystem (for logging)
 
 Author: xComBot Development Team
 Version: 1.0.0

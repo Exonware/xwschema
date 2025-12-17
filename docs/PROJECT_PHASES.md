@@ -104,7 +104,7 @@ xSchema follows a structured 5-phase development approach designed to deliver en
 
 ### **Key Deliverables:**
 - RUST core implementation
-- Python facade (exonware-xschema)
+- Python facade (exonware-xwschema)
 - TypeScript/Node.js facade
 - Go facade
 - Rust facade

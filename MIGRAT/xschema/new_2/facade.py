@@ -4,7 +4,7 @@ from typing import Any, Dict, Optional, Union
 from pathlib import Path
 import json
 
-from src.xlib.xsystem import get_logger
+from src.xlib.xwsystem import get_logger
 from .core.facade import xData
 from .core.errors import XSchemaError
 

@@ -13,8 +13,8 @@ from .config import xSchemaConfig, SCHEMA_TYPE_MAPPING
 from .engine import _xSchemaEngine
 from src.xlib.xdata.reference.reference import xReference, RefLoad, RefCopy, RefResolve
 from src.xlib.xdata.core.exceptions import SchemaError, SchemaValidationError
-from src.xlib.xsystem.monitoring.performance_monitor import logger
-from src.xlib.xsystem.structures.circular_detector import CircularReferenceDetector
+from src.xlib.xwsystem.monitoring.performance_monitor import logger
+from src.xlib.xwsystem.structures.circular_detector import CircularReferenceDetector
 from src.xlib.xdata.standard_abc import xSchemaBase
 
 

@@ -3,7 +3,7 @@
 **Company:** eXonware.com  
 **Author:** Eng. Muhammad AlShehri  
 **Email:** connect@exonware.com  
-**Version:** 0.0.1.1
+**Version:** 0.0.1.2
 
 ## 🎯 **What is xschema?**
 
@@ -13,7 +13,7 @@ xschema is a powerful Python library for schema validation and data structure de
 
 ### **Installation**
 ```bash
-pip install exonware-xschema
+pip install exonware-xwschema
 ```
 
 ### **Basic Usage**
@@ -64,6 +64,7 @@ xSchema follows a structured 5-phase development approach designed to deliver en
 - **[API Documentation](docs/)** - Complete reference and examples
 - **[Examples](examples/)** - Practical usage examples
 - **[Tests](tests/)** - Test suites and usage patterns
+- **[XWSyntax Integration](docs/XWSYNTAX_INTEGRATION.md)** - Collaboration opportunities with xwsyntax
 
 ## 🔧 **Development**
 

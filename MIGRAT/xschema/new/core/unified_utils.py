@@ -8,7 +8,7 @@ from typing import Any, Dict, Optional, Union, Callable
 from pathlib import Path
 import json
 
-from src.xlib.xsystem import get_logger
+from src.xlib.xwsystem import get_logger
 from .config import get_config
 from .errors import XSchemaError
 
