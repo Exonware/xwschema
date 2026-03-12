@@ -1,33 +1,28 @@
 #!/usr/bin/env python3
 """
 #exonware/xwschema/src/exonware/xwschema/errors.py
-
 XWSchema Error Classes
-
 This module defines all error classes for the xwschema library,
 providing rich error context and actionable error messages.
-
 Company: eXonware.com
-Author: Eng. Muhammad AlShehri
+Author: eXonware Backend Team
 Email: connect@exonware.com
-Version: 0.0.1.2
+Version: 0.4.0.1
 Generation Date: 09-Nov-2025
 """
 
 from typing import Any, Optional
-
-
 # ==============================================================================
 # BASE ERROR
 # ==============================================================================
 
+
 class XWSchemaError(Exception):
     """
     Base exception for all xwschema errors.
-    
     Provides rich error context with actionable suggestions.
     """
-    
+
     def __init__(
         self,
         message: str,
@@ -40,7 +35,6 @@ class XWSchemaError(Exception):
     ):
         """
         Initialize xwschema error with rich context.
-        
         Args:
             message: Error message
             operation: Operation being performed
@@ -55,10 +49,8 @@ class XWSchemaError(Exception):
         self.format = format
         self.context = context or {}
         self.suggestion = suggestion
-        
         # Build detailed error message
         parts = [message]
-        
         if operation:
             parts.append(f"Operation: {operation}")
         if path:
@@ -70,18 +62,16 @@ class XWSchemaError(Exception):
             parts.append(f"Context: {context_str}")
         if suggestion:
             parts.append(f"Suggestion: {suggestion}")
-        
         full_message = " | ".join(parts)
         super().__init__(full_message)
-
-
 # ==============================================================================
 # VALIDATION ERRORS
 # ==============================================================================
 
+
 class XWSchemaValidationError(XWSchemaError):
     """Raised when data fails schema validation."""
-    
+
     def __init__(self, message: str, field: Optional[str] = None, **kwargs):
         if 'suggestion' not in kwargs:
             kwargs['suggestion'] = "Check the data structure against the schema definition"
@@ -92,7 +82,7 @@ class XWSchemaValidationError(XWSchemaError):
 
 class XWSchemaTypeError(XWSchemaValidationError):
     """Raised when data type doesn't match schema."""
-    
+
     def __init__(self, message: str, expected_type: str, actual_type: str, **kwargs):
         kwargs['context'] = kwargs.get('context', {})
         kwargs['context'].update({
@@ -106,22 +96,21 @@ class XWSchemaTypeError(XWSchemaValidationError):
 
 class XWSchemaConstraintError(XWSchemaValidationError):
     """Raised when a constraint is violated."""
-    
+
     def __init__(self, message: str, constraint: str, **kwargs):
         kwargs['context'] = kwargs.get('context', {})
         kwargs['context']['constraint'] = constraint
         if 'suggestion' not in kwargs:
             kwargs['suggestion'] = f"Constraint '{constraint}' was violated"
         super().__init__(message, **kwargs)
-
-
 # ==============================================================================
 # SCHEMA ERRORS
 # ==============================================================================
 
+
 class XWSchemaParseError(XWSchemaError):
     """Raised when schema cannot be parsed."""
-    
+
     def __init__(self, message: str, **kwargs):
         if 'suggestion' not in kwargs:
             kwargs['suggestion'] = "Check schema syntax and format compatibility"
@@ -130,7 +119,7 @@ class XWSchemaParseError(XWSchemaError):
 
 class XWSchemaFormatError(XWSchemaError):
     """Raised when schema format is invalid or unsupported."""
-    
+
     def __init__(self, message: str, format: str, **kwargs):
         if 'suggestion' not in kwargs:
             kwargs['suggestion'] = f"Ensure schema format '{format}' is supported and correctly formatted"
@@ -139,24 +128,22 @@ class XWSchemaFormatError(XWSchemaError):
 
 class XWSchemaReferenceError(XWSchemaError):
     """Raised when schema reference cannot be resolved."""
-    
+
     def __init__(self, message: str, ref: str, **kwargs):
         kwargs['context'] = kwargs.get('context', {})
         kwargs['context']['reference'] = ref
         if 'suggestion' not in kwargs:
             kwargs['suggestion'] = f"Check that reference '{ref}' exists and is accessible"
         super().__init__(message, operation='reference_resolution', **kwargs)
-
-
 # ==============================================================================
 # GENERATION ERRORS
 # ==============================================================================
 
+
 class XWSchemaGenerationError(XWSchemaError):
     """Raised when schema generation fails."""
-    
+
     def __init__(self, message: str, **kwargs):
         if 'suggestion' not in kwargs:
             kwargs['suggestion'] = "Check input data structure and generation options"
         super().__init__(message, operation='generation', **kwargs)
-

@@ -1,49 +1,52 @@
 #!/usr/bin/env python3
 """
 #exonware/xwschema/src/exonware/xwschema/facade.py
-
 XWSchema Facade - Main User API
-
 This module provides the primary user-facing API with:
 - Multi-type __init__ (handles dict/path/XWSchema/merge)
 - Rich fluent API with method chaining
 - Async operations throughout
 - Engine-driven orchestration
-- Reuses XWData for schema storage
-- Reuses XWSystem for format I/O
-
+This module fully reuses ecosystem libraries:
+- xwdata: For schema storage and navigation (XWData.from_native(), to_native())
+  - Uses XWData for path-based schema access
+  - Uses XWData's query capabilities for schema queries
+- xwsystem: For format I/O (AutoSerializer, JsonSerializer, YamlSerializer, etc.)
+  - Uses xwsystem serialization registry for all file I/O
+  - Uses xwsystem.get_logger() for logging
+- No manual serialization or data manipulation - all delegated to libraries
 Company: eXonware.com
-Author: Eng. Muhammad AlShehri
+Author: eXonware Backend Team
 Email: connect@exonware.com
-Version: 0.0.1.2
+Version: 0.4.0.1
 Generation Date: 09-Nov-2025
 """
 
+from __future__ import annotations
 import asyncio
-from typing import Any, Optional, Union
+import inspect
+import threading
+from typing import Any, Optional, Callable
 from pathlib import Path
+from collections import OrderedDict
+from datetime import datetime
+# Fully reuse xwsystem for logging
 from exonware.xwsystem import get_logger
-
-# Reuse XWData for schema storage
-try:
-    from exonware.xwdata import XWData
-except ImportError:
-    XWData = None
-
+# xwdata is the base engine for xwschema (required dependency)
+from exonware.xwdata import XWData
 from .base import ASchema
 from .config import XWSchemaConfig
 from .engine import XWSchemaEngine
 from .defs import SchemaFormat, ValidationMode, SchemaGenerationMode
 from .errors import XWSchemaError, XWSchemaValidationError, XWSchemaParseError
 from .builder import XWSchemaBuilder
-
+from .type_utils import normalize_schema_dict, class_to_string, string_to_class
 logger = get_logger(__name__)
 
 
 class XWSchema(ASchema):
     """
     XWSchema - Universal schema validation and generation facade.
-    
     Features:
     - Multi-type constructor (dict/path/XWSchema)
     - Automatic format detection
@@ -52,60 +55,54 @@ class XWSchema(ASchema):
     - Engine-driven orchestration
     - Reuses XWData for schema storage (reuse!)
     - Reuses XWSystem for format I/O (reuse!)
-    
+    - Extends XWObject for identity management, timestamps, and metadata
     Examples:
         # From native dict
         schema = XWSchema({'type': 'object', 'properties': {'name': {'type': 'string'}}})
-        
         # From file
         schema = await XWSchema.load('schema.json')
-        
         # Validate data
         is_valid, errors = await schema.validate({'name': 'Alice'})
-        
         # Generate schema from data
         schema = await XWSchema.from_data({'name': 'Alice', 'age': 30})
     """
-    
+
     def __init__(
         self,
-        schema: Union[
-            dict,                           # Native Python dict
-            str, Path,                      # File path
-            'XWSchema',                     # Copy from another
-            XWData                          # XWData instance (schema stored as data)
-        ],
+        schema: dict | str | Path | XWSchema | XWData,
         metadata: Optional[dict] = None,
         config: Optional[XWSchemaConfig] = None,
         **opts
     ):
         """
         Universal constructor handling multiple input types intelligently.
-        
         Args:
-            schema: Schema in various forms (see type hints)
+            schema: Schema in various forms:
+                   - dict: Native Python dict
+                   - str/Path: File path
+                   - XWSchema: Copy from another
+                   - XWData: XWData instance (schema stored as data)
             metadata: Optional metadata to attach
             config: Optional configuration
             **opts: Additional options
         """
-        super().__init__(config)
+        super().__init__(config=config)
         self._config = config or XWSchemaConfig.default()
         self._engine = XWSchemaEngine(self._config)
-        
         # Multi-type handling
         if isinstance(schema, dict):
-            # Native Python dict - store as XWData
-            self._schema_data = XWData.from_native(schema, metadata=metadata) if XWData else None
-            self._schema_dict = schema
+            # Normalize schema dict - convert class types to strings for storage
+            # This allows users to use: {"type": XWSchema} or {"type": "exonware.xwschema.XWSchema"}
+            normalized_schema = normalize_schema_dict(schema)
+            # xwdata is the base engine: XWData for schema storage (path-based access, query, format-agnostic)
+            self._schema_data = XWData.from_native(normalized_schema, metadata=metadata)
+            self._schema_dict = normalized_schema
             self._format = SchemaFormat.JSON_SCHEMA  # Default to JSON Schema
-        
         elif isinstance(schema, (str, Path)):
-            # File path - load it (sync wrapper)
-            self._schema_data = None
             self._schema_dict = self._sync_load_file(str(schema))
+            self._schema_data = XWData.from_native(self._schema_dict)
             if metadata:
                 self._metadata.update(metadata)
-        
         elif isinstance(schema, XWSchema):
             # Copy from another XWSchema
             self._schema_data = schema._schema_data
@@ -113,13 +110,11 @@ class XWSchema(ASchema):
             self._format = schema._format
             if metadata:
                 self._metadata.update(metadata)
-        
-        elif XWData and isinstance(schema, XWData):
-            # XWData instance - use directly
+        elif isinstance(schema, XWData):
+            # xwdata is the base engine: use XWData instance directly
             self._schema_data = schema
             self._schema_dict = schema.to_native() if hasattr(schema, 'to_native') else {}
             self._format = SchemaFormat.JSON_SCHEMA
-        
         else:
             raise XWSchemaError(
                 f"Cannot create XWSchema from type: {type(schema).__name__}",
@@ -130,9 +125,13 @@ class XWSchema(ASchema):
                 },
                 suggestion=f"Provide schema as dict, file path, XWSchema instance, or XWData instance, not {type(schema).__name__}"
             )
-        
+        self._data = self._schema_data
+        # Semantic id from schema $id / id (never use uid)
+        schema_id = self._schema_dict.get("$id") or self._schema_dict.get("id")
+        if schema_id is not None:
+            self._id = str(schema_id)
         logger.debug(f"XWSchema initialized (format: {self._format.name if self._format else 'unknown'})")
-    
+
     def _sync_load_file(self, path: str) -> dict[str, Any]:
         """Sync wrapper for loading file in __init__."""
         new_loop = asyncio.new_event_loop()
@@ -142,20 +141,19 @@ class XWSchema(ASchema):
         finally:
             new_loop.close()
             asyncio.set_event_loop(None)
-    
+
     def _ensure_engine(self) -> XWSchemaEngine:
         """Ensure schema engine is initialized."""
         return self._engine
-    
     # ==========================================================================
     # FACTORY METHODS
     # ==========================================================================
-    
     @classmethod
+
     def create(
         cls,
         # Basic properties
-        type: Optional[Union[type, str]] = None,
+        type: Optional[type | str] = None,
         title: Optional[str] = None,
         description: Optional[str] = None,
         format: Optional[str] = None,
@@ -164,12 +162,10 @@ class XWSchema(ASchema):
         nullable: bool = False,
         deprecated: bool = False,
         confidential: bool = False,
-        
         # Field control
         strict: bool = False,
         alias: Optional[str] = None,
         exclude: bool = False,
-        
         # String constraints (OpenAPI standard naming)
         pattern: Optional[str] = None,
         length_min: Optional[int] = None,
@@ -177,64 +173,50 @@ class XWSchema(ASchema):
         strip_whitespace: bool = False,
         to_upper: bool = False,
         to_lower: bool = False,
-        
         # Numeric constraints (OpenAPI standard naming)
-        value_min: Optional[Union[int, float]] = None,
-        value_max: Optional[Union[int, float]] = None,
-        value_min_exclusive: Union[bool, float, int] = False,
-        value_max_exclusive: Union[bool, float, int] = False,
-        value_multiple_of: Optional[Union[int, float]] = None,
-        
+        value_min: Optional[int | float] = None,
+        value_max: Optional[int | float] = None,
+        value_min_exclusive: bool | float | int = False,
+        value_max_exclusive: bool | float | int = False,
+        value_multiple_of: Optional[int | float] = None,
         # Array constraints (OpenAPI standard naming)
         items: Optional[dict[str, Any]] = None,
         items_min: Optional[int] = None,
         items_max: Optional[int] = None,
         items_unique: bool = False,
-        
         # Object constraints (OpenAPI standard naming)
         properties: Optional[dict[str, dict[str, Any]]] = None,
         required: Optional[list[str]] = None,
-        properties_additional: Optional[Union[bool, dict[str, Any]]] = None,
+        properties_additional: Optional[bool | dict[str, Any]] = None,
         properties_min: Optional[int] = None,
         properties_max: Optional[int] = None,
-        
         # Logical constraints (OpenAPI standard naming)
         schema_all_of: Optional[list[dict[str, Any]]] = None,
         schema_any_of: Optional[list[dict[str, Any]]] = None,
         schema_one_of: Optional[list[dict[str, Any]]] = None,
         schema_not: Optional[dict[str, Any]] = None,
-        
         # Conditional constraints (OpenAPI standard naming)
         schema_if: Optional[dict[str, Any]] = None,
         schema_then: Optional[dict[str, Any]] = None,
         schema_else: Optional[dict[str, Any]] = None,
-        
         # Content constraints
         content_encoding: Optional[str] = None,
         content_media_type: Optional[str] = None,
         content_schema: Optional[dict[str, Any]] = None,
-        
         # Metadata
         example: Any = None,
         examples: Optional[dict[str, Any]] = None,
-        
         # References
         ref: Optional[str] = None,
         anchor: Optional[str] = None,
-        
         # Configuration
         config: Optional[XWSchemaConfig] = None,
         metadata: Optional[dict] = None,
-        
-        # Backward compatibility aliases
-        **kwargs
-    ) -> 'XWSchema':
+    ) -> XWSchema:
         """
         Create XWSchema with all properties from old MIGRAT implementation.
-        
-        Supports all OpenAPI/JSON Schema properties with backward compatibility aliases.
+        Supports all OpenAPI/JSON Schema properties.
         This method provides the same API as the old XWSchema class.
-        
         Examples:
             >>> # Simple string schema
             >>> schema = XWSchema.create(
@@ -243,7 +225,6 @@ class XWSchema(ASchema):
             ...     pattern=r"^[A-Za-z0-9]+$",
             ...     confidential=True
             ... )
-            
             >>> # Object schema with properties
             >>> schema = XWSchema.create(
             ...     type=dict,
@@ -253,7 +234,6 @@ class XWSchema(ASchema):
             ...     },
             ...     required=['name']
             ... )
-            
             >>> # Array schema
             >>> schema = XWSchema.create(
             ...     type=list,
@@ -310,46 +290,41 @@ class XWSchema(ASchema):
             examples=examples,
             ref=ref,
             anchor=anchor,
-            **kwargs
         )
-        
         # Create XWSchema from built dict
         return cls(schema_dict, metadata=metadata, config=config)
-    
     @classmethod
-    async def load(cls, path: Union[str, Path], format: Optional[SchemaFormat] = None, config: Optional[XWSchemaConfig] = None) -> 'XWSchema':
+
+    async def load(cls, path: str | Path, format: Optional[SchemaFormat | str] = None, config: Optional[XWSchemaConfig] = None) -> XWSchema:
         """
-        Load schema from file.
-        
+        Load schema from file or URL.
         Args:
-            path: Path to schema file
-            format: Optional format hint (auto-detected if not provided)
+            path: Path to schema file or URL (str or Path)
+            format: Optional format (e.g. "json", or SchemaFormat; auto-detected for files)
             config: Optional configuration
-            
         Returns:
             XWSchema instance
-            
         Example:
             >>> schema = await XWSchema.load('schema.json')
+            >>> schema = await XWSchema.load('https://spec.openapis.org/oas/3.1/schema/2022-10-07', format='json')
             >>> schema = await XWSchema.load('schema.avsc', format=SchemaFormat.AVRO)
         """
+        if isinstance(format, str):
+            format = SchemaFormat.JSON_SCHEMA if format.lower() in ("json", "json_schema") else SchemaFormat[format.upper().replace("-", "_")]
         engine = XWSchemaEngine(config or XWSchemaConfig.default())
-        schema_dict = await engine.load_schema(Path(path), format)
+        schema_dict = await engine.load_schema(path, format)
         return cls(schema_dict, config=config)
-    
     @classmethod
-    async def from_data(cls, data: Any, mode: SchemaGenerationMode = SchemaGenerationMode.INFER, config: Optional[XWSchemaConfig] = None) -> 'XWSchema':
+
+    async def from_data(cls, data: Any, mode: SchemaGenerationMode = SchemaGenerationMode.INFER, config: Optional[XWSchemaConfig] = None) -> XWSchema:
         """
         Generate schema from data.
-        
         Args:
             data: Data to generate schema from (can be dict, list, or XWData instance)
             mode: Generation mode
             config: Optional configuration
-            
         Returns:
             XWSchema instance
-            
         Example:
             >>> schema = await XWSchema.from_data({'name': 'Alice', 'age': 30})
             >>> schema = await XWSchema.from_data(xwdata_instance, mode=SchemaGenerationMode.COMPREHENSIVE)
@@ -357,37 +332,39 @@ class XWSchema(ASchema):
         engine = XWSchemaEngine(config or XWSchemaConfig.default())
         schema_dict = await engine.generate_schema(data, mode)
         return cls(schema_dict, config=config)
-    
     @classmethod
-    def from_native(cls, schema_dict: dict[str, Any], config: Optional[XWSchemaConfig] = None) -> 'XWSchema':
+
+    def from_native(cls, schema_dict: dict[str, Any], config: Optional[XWSchemaConfig] = None) -> XWSchema:
         """
         Create schema from native Python dict.
-        
         Args:
             schema_dict: Schema definition as dict
             config: Optional configuration
-            
         Returns:
             XWSchema instance
         """
         return cls(schema_dict, config=config)
-    
+    @classmethod
+
+    def from_string(cls, s: str, config: Optional[XWSchemaConfig] = None) -> XWSchema:
+        """
+        Create schema from JSON string (reuses XWObject.from_string pattern).
+        Uses xwsystem JsonSerializer; constructs XWSchema(schema_dict).
+        """
+        from exonware.xwsystem.io.serialization import JsonSerializer
+        return cls(JsonSerializer().decode(s), config=config)
     # ==========================================================================
     # VALIDATION
     # ==========================================================================
-    
+
     async def validate(self, data: Any) -> tuple[bool, list[str]]:
         """
         Validate data against this schema.
-        
         Reuses XWData for efficient navigation when data is XWData instance.
-        
         Args:
             data: Data to validate (can be dict, list, or XWData instance)
-            
         Returns:
             Tuple of (is_valid, error_messages)
-            
         Example:
             >>> schema = XWSchema({'type': 'object', 'properties': {'name': {'type': 'string'}}})
             >>> is_valid, errors = await schema.validate({'name': 'Alice'})
@@ -400,37 +377,71 @@ class XWSchema(ASchema):
         except Exception as e:
             logger.error(f"Validation error: {e}")
             return False, [f"Validation failed: {str(e)}"]
-    
+
+    async def check(self, data: Any) -> dict[str, Any]:
+        """
+        Schema check on XW data: validate and return result dict (same shape as xwdata SchemaValidator).
+        Use this for integration with xwdata or when you need a dict with 'valid' and 'errors'.
+        Accepts XWData, dict, or list.
+        Args:
+            data: Data to validate (XWData, dict, or list)
+        Returns:
+            Dict with 'valid' (bool), 'errors' (list[str]), and optionally 'format'
+        Example:
+            >>> schema = XWSchema({'type': 'object', 'properties': {'name': {'type': 'string'}}})
+            >>> result = await schema.check(xwdata_instance)
+            >>> if not result['valid']:
+            ...     print(result['errors'])
+        """
+        is_valid, errors = await self.validate(data)
+        return {'valid': is_valid, 'errors': errors or []}
+
+    def check_sync(self, data: Any) -> dict[str, Any]:
+        """
+        Synchronous schema check on XW data (same shape as check()).
+        Returns:
+            Dict with 'valid' (bool), 'errors' (list[str])
+        """
+        is_valid, errors = self.validate_sync(data)
+        return {'valid': is_valid, 'errors': errors or []}
+
     def validate_sync(self, data: Any) -> tuple[bool, list[str]]:
         """
         Synchronous wrapper for validate().
-        
+        Handles both cases:
+        - When called from sync context: creates new event loop
+        - When called from async context: uses direct synchronous validation to avoid loop conflicts
         Args:
             data: Data to validate
-            
         Returns:
             Tuple of (is_valid, error_messages)
         """
-        new_loop = asyncio.new_event_loop()
         try:
-            asyncio.set_event_loop(new_loop)
-            return new_loop.run_until_complete(self.validate(data))
-        finally:
-            new_loop.close()
-            asyncio.set_event_loop(None)
-    
+            # Check if there's already a running event loop
+            running_loop = asyncio.get_running_loop()
+            # If we're in an async context, use synchronous validation directly
+            # to avoid event loop conflicts
+            validator = self._engine._ensure_validator()
+            schema_dict = self.to_native()
+            return validator.validate_schema(data, schema_dict)
+        except RuntimeError:
+            # No running loop - we're in a sync context, create a new loop
+            new_loop = asyncio.new_event_loop()
+            try:
+                asyncio.set_event_loop(new_loop)
+                return new_loop.run_until_complete(self.validate(data))
+            finally:
+                new_loop.close()
+                asyncio.set_event_loop(None)
+
     async def validate_issues(self, data: Any) -> list[dict[str, str]]:
         """
         Validate data against this schema and return structured issues.
-        
         Returns a list of issues with node_path and issue_type for easier error handling.
-        
         Args:
             data: Data to validate (can be dict, list, or XWData instance)
-            
         Returns:
             List of dictionaries with 'node_path', 'issue_type', and 'message' keys
-            
         Example:
             >>> schema = XWSchema({'type': 'object', 'properties': {'name': {'type': 'string'}}})
             >>> issues = await schema.validate_issues({'name': 123})
@@ -441,7 +452,6 @@ class XWSchema(ASchema):
             schema_dict = self.to_native()
             validator = self._engine._ensure_validator()
             issues = validator.validate_schema_issues(data, schema_dict)
-            
             # Convert ValidationIssue objects to dictionaries
             return [
                 {
@@ -458,164 +468,596 @@ class XWSchema(ASchema):
                 'issue_type': 'validation_error',
                 'message': f"Validation failed: {str(e)}"
             }]
-    
+
     def validate_issues_sync(self, data: Any) -> list[dict[str, str]]:
         """
         Synchronous wrapper for validate_issues().
-        
+        Handles both cases:
+        - When called from sync context: creates new event loop
+        - When called from async context: uses direct synchronous validation to avoid loop conflicts
         Args:
             data: Data to validate
-            
         Returns:
-            List of dictionaries with 'node_path' and 'issue_type' keys
+            List of dictionaries with 'node_path', 'issue_type', and 'message' keys
         """
-        new_loop = asyncio.new_event_loop()
         try:
-            asyncio.set_event_loop(new_loop)
-            return new_loop.run_until_complete(self.validate_issues(data))
-        finally:
-            new_loop.close()
-            asyncio.set_event_loop(None)
-    
+            # Check if there's already a running event loop
+            running_loop = asyncio.get_running_loop()
+            # If we're in an async context, use synchronous validation directly
+            # to avoid event loop conflicts
+            validator = self._engine._ensure_validator()
+            schema_dict = self.to_native()
+            issues = validator.validate_schema_issues(data, schema_dict)
+            return [
+                {
+                    'node_path': issue.node_path,
+                    'issue_type': issue.issue_type,
+                    'message': issue.message
+                }
+                for issue in issues
+            ]
+        except RuntimeError:
+            # No running loop - we're in a sync context, create a new loop
+            new_loop = asyncio.new_event_loop()
+            try:
+                asyncio.set_event_loop(new_loop)
+                return new_loop.run_until_complete(self.validate_issues(data))
+            finally:
+                new_loop.close()
+                asyncio.set_event_loop(None)
+    # ==========================================================================
+    # ISchemaProvider (xwsystem) – validate_schema, create_schema, validate_type, validate_range, validate_pattern
+    # ==========================================================================
+
+    def validate_schema(self, data: Any, schema: dict[str, Any]) -> tuple[bool, list[str]]:
+        """
+        Validate data against a schema (ISchemaProvider).
+        Delegates to the engine's validator.
+        """
+        return self._engine._ensure_validator().validate_schema(data, schema)
+
+    def create_schema(self, data: Any) -> dict[str, Any]:
+        """
+        Create schema from data (ISchemaProvider).
+        Delegates to the engine's validator (generator).
+        """
+        return self._engine._ensure_validator().create_schema(data)
+
+    def validate_type(self, data: Any, expected_type: str) -> bool:
+        """Validate data type (ISchemaProvider). Delegates to engine's validator."""
+        return self._engine._ensure_validator().validate_type(data, expected_type)
+
+    def validate_range(self, data: Any, min_value: Any, max_value: Any) -> bool:
+        """Validate data range (ISchemaProvider). Delegates to engine's validator."""
+        return self._engine._ensure_validator().validate_range(data, min_value, max_value)
+
+    def validate_pattern(self, data: str, pattern: str) -> bool:
+        """Validate string pattern (ISchemaProvider). Delegates to engine's validator."""
+        return self._engine._ensure_validator().validate_pattern(data, pattern)
     # ==========================================================================
     # SERIALIZATION
     # ==========================================================================
-    
+
     def to_native(self) -> dict[str, Any]:
         """
         Get native Python dict representation of schema.
-        
+        Fully reuses XWData.to_native() for conversion.
+        XWData provides format-agnostic conversion to native Python types.
         Returns:
             Schema definition as dict
         """
-        if self._schema_data and XWData:
-            return self._schema_data.to_native()
-        return self._schema_dict
-    
-    async def serialize(self, format: Union[str, SchemaFormat], **opts) -> Union[str, bytes]:
-        """
-        Serialize schema to specified format.
-        
-        Reuses XWSystem's AutoSerializer for format I/O.
-        
-        Args:
-            format: Target format
-            **opts: Additional serialization options
-            
-        Returns:
-            Serialized schema (str for text formats, bytes for binary)
-        """
-        schema_dict = self.to_native()
-        engine = self._ensure_engine()
-        
-        # Convert format string to enum if needed
-        if isinstance(format, str):
-            try:
-                format = SchemaFormat[format.upper()]
-            except KeyError:
-                format = SchemaFormat.JSON_SCHEMA  # Default
-        
-        # Use AutoSerializer's detect_and_serialize method
-        serializer = engine._ensure_serializer()
-        # Map schema format to serialization format
-        format_hint = format.name if isinstance(format, SchemaFormat) else str(format).upper()
-        if format_hint == 'JSON_SCHEMA':
-            format_hint = 'JSON'
-        return serializer.detect_and_serialize(schema_dict, format_hint=format_hint, **opts)
-    
-    async def save(self, path: Union[str, Path], format: Optional[Union[str, SchemaFormat]] = None, **opts) -> 'XWSchema':
-        """
-        Save schema to file.
-        
-        Reuses XWSystem's AutoSerializer for format I/O.
-        
-        Args:
-            path: Path to save schema file
-            format: Optional format (auto-detected from extension if not provided)
-            **opts: Additional options
-            
-        Returns:
-            Self for chaining
-            
-        Example:
-            >>> await schema.save('schema.json')
-            >>> await schema.save('schema.avsc', format=SchemaFormat.AVRO)
-        """
-        # Detect format from extension if not provided
-        if format is None:
-            format = self._engine._detect_schema_format(Path(path))
-        elif isinstance(format, str):
-            try:
-                format = SchemaFormat[format.upper()]
-            except KeyError:
-                format = SchemaFormat.JSON_SCHEMA
-        
-        schema_dict = self.to_native()
-        await self._engine.save_schema(schema_dict, Path(path), format)
+        return self._schema_data.to_native() if self._schema_data else self._schema_dict
+
+    async def serialize(self, format: str | SchemaFormat, **opts) -> str | bytes:
+        """Serialize schema (delegates to XWData.serialize; xwdata uses xwsystem for I/O)."""
+        return await self._schema_data.serialize(format=self._schema_format_str(format), **opts)
+
+    def _schema_format_str(self, format: str | SchemaFormat) -> Optional[str]:
+        """Map SchemaFormat to xwdata format string."""
+        if not format:
+            return None
+        if isinstance(format, SchemaFormat):
+            return format.name.lower().replace('_schema', '').replace('_', '-')
+        return str(format).lower()
+
+    def to_format(self, format: str | SchemaFormat, **opts) -> str | bytes:
+        """Serialize schema to format (delegates to XWData.to_format())."""
+        return self._schema_data.to_format(format=self._schema_format_str(format), **opts)
+
+    def to_file(self, path: str | Path, format: Optional[str | SchemaFormat] = None, **opts) -> XWSchema:
+        """Save schema to file (delegates to XWData.to_file())."""
+        self._schema_data.to_file(path, format=self._schema_format_str(format), **opts)
         return self
-    
-    async def reload(self, path: Union[str, Path], format: Optional[Union[str, SchemaFormat]] = None, **opts) -> 'XWSchema':
-        """
-        Reload schema from file (updates current instance).
-        
-        Args:
-            path: Path to schema file
-            format: Optional format hint
-            **opts: Additional options
-            
-        Returns:
-            Self for chaining
-        """
-        if isinstance(format, str):
-            try:
-                format = SchemaFormat[format.upper()]
-            except KeyError:
-                format = None
-        
-        schema_dict = await self._engine.load_schema(Path(path), format)
-        self._schema_dict = schema_dict
-        if XWData:
-            self._schema_data = XWData.from_native(schema_dict)
+
+    async def save(self, path: str | Path, format: Optional[str | SchemaFormat] = None, **opts) -> XWSchema:
+        """Save schema to file (delegates to XWData.save; xwdata uses xwsystem for I/O)."""
+        await self._schema_data.save(path, format=self._schema_format_str(format), **opts)
         return self
-    
+
+    async def reload(self, path: str | Path, format: Optional[str | SchemaFormat] = None, **opts) -> XWSchema:
+        """Reload schema from file (engine uses XWData.load)."""
+        format_enum = format
+        if isinstance(format, str) and format:
+            try:
+                format_enum = SchemaFormat[format.upper().replace("-", "_")]
+            except KeyError:
+                format_enum = None
+        self._schema_dict = await self._engine.load_schema(Path(path), format_enum)
+        self._schema_data = XWData.from_native(self._schema_dict)
+        return self
     # ==========================================================================
     # SCHEMA ACCESS
     # ==========================================================================
-    
+
     def __getitem__(self, key: str) -> Any:
         """
         Get schema property using bracket notation.
-        
-        Reuses XWData's path navigation if available.
-        
+        Fully reuses XWData's path navigation if available.
+        XWData provides efficient path-based access for schema properties.
         Args:
             key: Schema property path (e.g., 'properties.name.type')
-            
         Returns:
             Schema property value
-            
         Example:
             >>> schema['properties']['name']['type']  # 'string'
             >>> schema['properties.name.type']  # 'string' (if XWData supports path notation)
         """
-        if self._schema_data and XWData:
-            try:
-                return self._schema_data[key]
-            except (KeyError, IndexError):
-                pass
-        
-        # Fallback to native dict access
-        keys = key.split('.')
-        value = self._schema_dict
-        for k in keys:
-            if isinstance(value, dict):
-                value = value.get(k)
-            else:
-                raise KeyError(f"Schema path '{key}' not found")
-        return value
-    
+        return self._schema_data[key]
+
+    async def query(self, expression: str, format: str = 'sql', **opts) -> Any:
+        """Query schema (delegates to XWData.query() via xwquery)."""
+        return await self._schema_data.query(expression, format=format, **opts)
+
+    def query_sync(self, expression: str, format: str = 'sql', **opts) -> Any:
+        """
+        Synchronous wrapper for query().
+        Args:
+            expression: Query expression
+            format: Query format (default: 'sql')
+            **opts: Additional query options
+        Returns:
+            Query result
+        """
+        new_loop = asyncio.new_event_loop()
+        try:
+            asyncio.set_event_loop(new_loop)
+            return new_loop.run_until_complete(self.query(expression, format=format, **opts))
+        finally:
+            new_loop.close()
+            asyncio.set_event_loop(None)
+
     def __repr__(self) -> str:
         """String representation."""
         format_name = self._format.name if self._format else 'unknown'
         return f"<XWSchema(format={format_name}, type={self._schema_dict.get('type', 'unknown')})>"
+    # ==========================================================================
+    # UTILITY METHODS - Extract and Load Properties/Parameters
+    # ==========================================================================
+    # Thread-safe cache for extraction to prevent deadlocks and improve performance
+    _extraction_cache: dict[int, Any] = {}
+    _extraction_cache_lock = threading.RLock()
+    _extraction_in_progress: set[int] = set()  # Track objects currently being extracted
+    _extraction_cache_max_size = 1024
+    @staticmethod
 
+    def _get_cache_key(obj: Any) -> int:
+        """Generate cache key for object."""
+        # Use object ID for caching
+        return id(obj)
+    @staticmethod
+
+    def _clear_extraction_cache():
+        """Clear the extraction cache (useful for testing)."""
+        with XWSchema._extraction_cache_lock:
+            XWSchema._extraction_cache.clear()
+            XWSchema._extraction_in_progress.clear()
+    @staticmethod
+
+    def extract_properties(obj: Any) -> list[XWSchema]:
+        """
+        Extract all XWSchema property instances from an object (class or instance).
+        Scans for properties decorated with @XWSchema by checking for
+        the '_schema' and '_is_schema_decorated' attributes.
+        Also finds @property decorated methods with type hints.
+        Args:
+            obj: Object (class or instance) to scan for schema properties
+        Returns:
+            List of XWSchema instances found on the object (one per property)
+        Example:
+            >>> class MyClass:
+            ...     @XWSchema(type=str)
+            ...     def name(self) -> str:
+            ...         return self._name
+            ...
+            >>> schemas = XWSchema.extract_properties(MyClass)
+            >>> len(schemas)
+            1
+        Uses caching to prevent deadlocks and improve performance.
+        """
+        cache_key = XWSchema._get_cache_key(obj)
+        # Check cache first (deadlock breaker)
+        with XWSchema._extraction_cache_lock:
+            if cache_key in XWSchema._extraction_cache:
+                cached = XWSchema._extraction_cache[cache_key]
+                if isinstance(cached, list):
+                    logger.debug(f"Cache hit for extract_properties: {obj.__name__ if inspect.isclass(obj) else obj.__class__.__name__}")
+                    return cached.copy()  # Return copy to prevent mutation
+            # Check if extraction is already in progress (deadlock breaker)
+            if cache_key in XWSchema._extraction_in_progress:
+                logger.warning(f"Circular extraction detected for {obj.__name__ if inspect.isclass(obj) else obj.__class__.__name__}, returning empty list")
+                return []  # Return empty to break deadlock
+            # Mark as in progress
+            XWSchema._extraction_in_progress.add(cache_key)
+        try:
+            schemas: list[XWSchema] = []
+            # Determine what to scan (class dict or instance dict)
+            if inspect.isclass(obj):
+                namespace = obj.__dict__
+                annotations = getattr(obj, '__annotations__', {})
+            else:
+                # For instances, check both instance and class
+                namespace = {}
+                for k, v in vars(obj).items():
+                    if hasattr(v, '_schema') or isinstance(v, property) or callable(v):
+                        namespace[k] = v
+                namespace.update({k: v for k, v in obj.__class__.__dict__.items()})
+                annotations = getattr(obj.__class__, '__annotations__', {})
+            for name, attr in namespace.items():
+                # Skip private attributes (unless they have _schema)
+                if name.startswith('_') and not hasattr(attr, '_schema'):
+                    continue
+                # Pattern 1: Check for @XWSchema decorated methods (has _schema and _is_schema_decorated)
+                if hasattr(attr, '_schema') and hasattr(attr, '_is_schema_decorated'):
+                    schema_obj = getattr(attr, '_schema')
+                    if isinstance(schema_obj, XWSchema):
+                        schemas.append(schema_obj)
+                        logger.debug(f"Extracted @XWSchema property '{name}' from {obj.__name__ if inspect.isclass(obj) else obj.__class__.__name__}")
+                # Pattern 2: Check if the attribute itself is an XWSchema (direct pattern)
+                elif isinstance(attr, XWSchema):
+                    schemas.append(attr)
+                    logger.debug(f"Extracted direct XWSchema '{name}' from {obj.__name__ if inspect.isclass(obj) else obj.__class__.__name__}")
+            # Cache the result
+            with XWSchema._extraction_cache_lock:
+                # Limit cache size
+                if len(XWSchema._extraction_cache) >= XWSchema._extraction_cache_max_size:
+                    # Remove oldest entry (FIFO)
+                    oldest_key = next(iter(XWSchema._extraction_cache))
+                    del XWSchema._extraction_cache[oldest_key]
+                XWSchema._extraction_cache[cache_key] = schemas.copy()  # Store copy
+                XWSchema._extraction_in_progress.remove(cache_key)
+            return schemas
+        except Exception as e:
+            # Remove from in-progress on error
+            with XWSchema._extraction_cache_lock:
+                XWSchema._extraction_in_progress.discard(cache_key)
+            logger.error(f"Error extracting properties from {obj.__name__ if inspect.isclass(obj) else obj.__class__.__name__}: {e}", exc_info=True)
+            return []
+    @staticmethod
+
+    def load_properties(obj: Any, properties: list[XWSchema]) -> bool:
+        """
+        Load/attach XWSchema property instances to an object instance.
+        Creates property getters/setters for each schema. Note that property
+        names are inferred from the schema (if it has a name/alias) or must
+        be provided via metadata.
+        Args:
+            obj: Object instance to attach properties to (must be an instance, not a class)
+            properties: List of XWSchema instances to attach
+        Returns:
+            True if all properties were successfully attached, False otherwise
+        Raises:
+            ValueError: If obj is a class instead of an instance
+        Note:
+            This method creates simple property descriptors. For full property
+            functionality with validation, consider using the @XWSchema decorator
+            directly in class definitions.
+        """
+        import inspect
+        if inspect.isclass(obj):
+            raise ValueError("Cannot load properties onto a class. Use an instance instead.")
+        if not properties:
+            logger.warning(f"No properties provided to load onto {obj}")
+            return True
+        success_count = 0
+        for i, schema in enumerate(properties):
+            if not isinstance(schema, XWSchema):
+                logger.warning(f"Skipping non-XWSchema object at index {i}: {type(schema)}")
+                continue
+            try:
+                # Try to get property name from schema metadata or use index
+                prop_name = None
+                if hasattr(schema, '_metadata') and schema._metadata:
+                    prop_name = schema._metadata.get('property_name')
+                if not prop_name and hasattr(schema, 'alias') and schema.alias:
+                    prop_name = schema.alias
+                if not prop_name:
+                    # Use a generated name
+                    prop_name = f"_schema_property_{i}"
+                    logger.warning(f"No property name found for schema at index {i}, using '{prop_name}'")
+                # Create a simple property descriptor
+                # Capture schema and prop_name in closure
+                schema_instance = schema  # Capture for closure
+                captured_prop_name = prop_name  # Capture for closure
+                def getter(self_obj):
+                    # Try to get value from instance storage
+                    storage_attr = f"_{captured_prop_name}"
+                    if hasattr(self_obj, storage_attr):
+                        return getattr(self_obj, storage_attr)
+                    return None
+                def setter(self_obj, value):
+                    # Validate if possible
+                    if hasattr(schema_instance, 'validate_sync'):
+                        is_valid, errors = schema_instance.validate_sync(value)
+                        if not is_valid:
+                            logger.warning(f"Validation failed for {captured_prop_name}: {errors}")
+                    # Store in instance
+                    storage_attr = f"_{captured_prop_name}"
+                    setattr(self_obj, storage_attr, value)
+                # Create property and attach to class
+                prop = property(getter, setter)
+                setattr(obj.__class__, prop_name, prop)
+                logger.debug(f"Loaded property '{prop_name}' onto {obj.__class__.__name__} instance")
+                success_count += 1
+            except Exception as e:
+                logger.error(f"Failed to load property at index {i}: {e}", exc_info=True)
+                continue
+        all_success = success_count == len(properties)
+        if not all_success:
+            logger.warning(f"Only loaded {success_count}/{len(properties)} properties onto {obj.__class__.__name__}")
+        return all_success
+    @staticmethod
+
+    def extract_parameters(func: Callable) -> tuple[list[XWSchema], list[XWSchema]]:
+        """
+        Extract parameter schemas from a function signature.
+        Reuses extract_properties logic by treating the function as an object
+        and extracting schemas from its signature. Uses caching to prevent deadlocks.
+        Returns schemas for input parameters and return type as two separate lists.
+        Input parameters are in the order they appear in the function signature
+        (excluding 'self' and 'cls').
+        Args:
+            func: Function to extract parameters from
+        Returns:
+            Tuple of (in_list, out_list) where:
+            - in_list: List of XWSchema for input parameters (ordered)
+            - out_list: List of XWSchema for return type (typically one element)
+        Example:
+            >>> def my_func(x: int, y: str) -> bool:
+            ...     return True
+            ...
+            >>> in_schemas, out_schemas = XWSchema.extract_parameters(my_func)
+            >>> len(in_schemas)
+            2
+            >>> len(out_schemas)
+            1
+        """
+        from typing import get_type_hints, get_origin, get_args, Any as TypingAny
+        cache_key = XWSchema._get_cache_key(func)
+        # Check cache first (deadlock breaker)
+        with XWSchema._extraction_cache_lock:
+            if cache_key in XWSchema._extraction_cache:
+                # For functions, we need to return (in_list, out_list) tuple
+                # Cache stores as list, but we need to reconstruct tuple
+                cached = XWSchema._extraction_cache[cache_key]
+                if isinstance(cached, tuple):
+                    logger.debug(f"Cache hit for extract_parameters: {func.__name__}")
+                    return cached  # Already a tuple
+                # If it's a list, it's from extract_properties, need to convert
+                logger.debug(f"Cache hit (properties) for extract_parameters: {func.__name__}, converting")
+            # Check if extraction is already in progress (deadlock breaker)
+            if cache_key in XWSchema._extraction_in_progress:
+                logger.warning(f"Circular extraction detected for function {func.__name__}, returning empty lists")
+                return ([], [])  # Return empty to break deadlock
+            # Mark as in progress
+            XWSchema._extraction_in_progress.add(cache_key)
+        try:
+            in_schemas: list[XWSchema] = []
+            out_schemas: list[XWSchema] = []
+            # Get function signature
+            sig = inspect.signature(func)
+            type_hints = get_type_hints(func, include_extras=True)
+            # Extract input parameter schemas (excluding self/cls)
+            # Reuse extract_properties logic by treating function parameters as properties
+            for param_name, param in sig.parameters.items():
+                if param_name in ('self', 'cls'):
+                    continue
+                # Get type annotation
+                param_type = type_hints.get(param_name, TypingAny)
+                # Determine if required (no default value)
+                has_default = param.default is not inspect.Parameter.empty
+                required = not has_default
+                # Convert type to schema dict (reuse logic)
+                schema_dict = XWSchema._type_to_schema_dict_static(param_type, required)
+                # Create XWSchema (reusing property extraction pattern)
+                schema = XWSchema(schema_dict)
+                in_schemas.append(schema)
+            # Extract return type schema
+            return_type = type_hints.get('return', None)
+            if return_type is not None:
+                # Convert return type to schema dict
+                schema_dict = XWSchema._type_to_schema_dict_static(return_type, required=True)
+                schema = XWSchema(schema_dict)
+                out_schemas.append(schema)
+            result = (in_schemas, out_schemas)
+            # Cache the result
+            with XWSchema._extraction_cache_lock:
+                # Limit cache size
+                if len(XWSchema._extraction_cache) >= XWSchema._extraction_cache_max_size:
+                    # Remove oldest entry (FIFO)
+                    oldest_key = next(iter(XWSchema._extraction_cache))
+                    del XWSchema._extraction_cache[oldest_key]
+                XWSchema._extraction_cache[cache_key] = result
+                XWSchema._extraction_in_progress.remove(cache_key)
+            return result
+        except Exception as e:
+            # Remove from in-progress on error
+            with XWSchema._extraction_cache_lock:
+                XWSchema._extraction_in_progress.discard(cache_key)
+            logger.error(f"Failed to extract parameters from {func.__name__}: {e}", exc_info=True)
+            return ([], [])
+    @staticmethod
+
+    def load_parameters(func: Callable, parameters: dict[str, list[XWSchema]]) -> bool:
+        """
+        Load parameter schemas onto a function.
+        Attaches schemas as function attributes. The parameters dict should have
+        'in' and 'out' keys mapping to lists of XWSchema.
+        Args:
+            func: Function to attach schemas to
+            parameters: Dictionary with 'in' and 'out' keys, each mapping to list of XWSchema
+                - 'in': List of XWSchema for input parameters (ordered)
+                - 'out': List of XWSchema for return type
+        Returns:
+            True if schemas were successfully attached, False otherwise
+        Example:
+            >>> def my_func(x: int, y: str) -> bool:
+            ...     return True
+            ...
+            >>> schemas = {
+            ...     'in': [XWSchema({'type': 'integer'}), XWSchema({'type': 'string'})],
+            ...     'out': [XWSchema({'type': 'boolean'})]
+            ... }
+            >>> XWSchema.load_parameters(my_func, schemas)
+            True
+            >>> hasattr(my_func, '_in_schemas')
+            True
+        """
+        try:
+            in_schemas = parameters.get('in', [])
+            out_schemas = parameters.get('out', [])
+            # Validate inputs
+            if not isinstance(in_schemas, list):
+                logger.error("'in' parameter must be a list")
+                return False
+            if not isinstance(out_schemas, list):
+                logger.error("'out' parameter must be a list")
+                return False
+            # Attach schemas as function attributes
+            func._in_schemas = in_schemas
+            func._out_schemas = out_schemas
+            logger.debug(f"Loaded {len(in_schemas)} input and {len(out_schemas)} output schemas onto {func.__name__}")
+            return True
+        except Exception as e:
+            logger.error(f"Failed to load parameters onto {func.__name__}: {e}", exc_info=True)
+            return False
+    @staticmethod
+
+    def _type_to_schema_dict_static(param_type: Any, required: bool = True) -> dict[str, Any]:
+        """
+        Convert Python type annotation to XWSchema dictionary (static helper).
+        This is a static version of the type conversion logic, extracted
+        for use in utility functions.
+        Args:
+            param_type: Type annotation from function signature
+            required: Whether the type is required
+        Returns:
+            Schema dictionary compatible with XWSchema
+        """
+        from typing import get_origin, get_args, Any as TypingAny
+        schema: dict[str, Any] = {}
+        # Handle None type
+        if param_type is None or param_type is type(None):
+            schema["type"] = "null"
+            return schema
+        # Handle generic types (List, Dict, Union, Optional, etc.)
+        origin = getattr(param_type, '__origin__', None)
+        args = getattr(param_type, '__args__', None)
+        # Check origin name
+        origin_name = None
+        if hasattr(origin, '__name__'):
+            origin_name = origin.__name__
+        elif hasattr(origin, '__qualname__'):
+            origin_name = origin.__qualname__.split('.')[-1]
+        if origin is not None and origin_name:
+            # Handle list[T] or list[T]
+            if origin_name in ('list', 'List'):
+                schema["type"] = "array"
+                if args and len(args) > 0:
+                    item_type = args[0]
+                    schema["items"] = XWSchema._type_to_schema_dict_static(item_type, required=True)
+                else:
+                    schema["items"] = {}
+            # Handle dict[K, V] or dict[K, V]
+            elif origin_name in ('dict', 'Dict'):
+                schema["type"] = "object"
+            # Handle Union/Optional
+            elif origin_name in ('Union', 'Optional'):
+                non_none_args = [arg for arg in args if arg is not type(None)] if args else []
+                if non_none_args:
+                    # Use first non-None type
+                    schema = XWSchema._type_to_schema_dict_static(non_none_args[0], required)
+        # Handle simple types
+        if "type" not in schema:
+            type_mapping = {
+                str: "string",
+                int: "integer",
+                float: "number",
+                bool: "boolean",
+                list: "array",
+                dict: "object",
+                tuple: "array",
+                set: "array",
+            }
+            if param_type in type_mapping:
+                schema["type"] = type_mapping[param_type]
+            elif hasattr(param_type, '__name__'):
+                # Use type name as fallback
+                schema["type"] = param_type.__name__.lower()
+            else:
+                schema["type"] = "object"
+        return schema
+    # ============================================================================
+    # XWObject Implementation
+    # ============================================================================
+    @property
+
+    def id(self) -> str:
+        """Semantic id (e.g. schema $id); distinct from uid."""
+        return self._id if self._id is not None else ""
+    @property
+
+    def created_at(self) -> datetime:
+        """Get the creation timestamp."""
+        return self._created_at
+    @property
+
+    def updated_at(self) -> datetime:
+        """Get the last update timestamp."""
+        return self._updated_at
+
+    def to_dict(self) -> dict[str, Any]:
+        """
+        Export schema as dictionary.
+        Includes XWObject fields (id, uid, created_at, updated_at, title, description)
+        and schema-specific data.
+        """
+        result = {
+            "id": self.id,
+            "uid": self.uid,
+            "created_at": self.created_at.isoformat(),
+            "updated_at": self.updated_at.isoformat(),
+            "schema": self.to_native(),
+            "format": self._format.name if self._format else None,
+        }
+        if self.title:
+            result["title"] = self.title
+        if self.description:
+            result["description"] = self.description
+        if self._metadata:
+            result["metadata"] = self._metadata
+        return result
+
+    def save_metadata(self, *args, **kwargs) -> None:
+        """
+        Save schema metadata to storage (placeholder).
+        For saving schema definition to file, use await schema.save(path, format).
+        """
+        self._updated_at = datetime.now()
+        logger.debug(f"Saving schema metadata: {self.uid}")
+
+    def load_metadata(self, *args, **kwargs) -> None:
+        """
+        Load schema metadata from storage (placeholder).
+        For loading schema from file, use await XWSchema.load(path).
+        """
+        logger.debug(f"Loading schema metadata: {self.uid}")

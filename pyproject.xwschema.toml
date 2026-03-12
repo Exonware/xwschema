@@ -1,3 +1,4 @@
+# Source size (src/*): ~350.2 KB
 [build-system]
 requires = [
     "hatchling",
@@ -20,20 +21,12 @@ keywords = [
     "data-types",
     "exonware",
 ]
-classifiers = [
-    "Development Status :: 3 - Alpha",
-    "Intended Audience :: Developers",
-    "License :: OSI Approved :: MIT License",
-    "Operating System :: OS Independent",
-    "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.12",
-    "Topic :: Software Development :: Libraries :: Python Modules",
-]
+classifiers = []
 dependencies = [
     "exonware-xwschema",
 ]
 authors = [
-    { name = "Eng. Muhammad AlShehri", email = "connect@exonware.com" },
+    { name = "eXonware Backend Team", email = "connect@exonware.com" },
 ]
 
 [project.license]
@@ -55,10 +48,13 @@ Homepage = "https://exonware.com"
 Repository = "https://github.com/exonware/xwschema"
 Documentation = "https://github.com/exonware/xwschema#readme"
 
+[project.entry-points."xwsystem.schema_validators"]
+xwschema = "exonware.xwschema.validator:get_schema_validator"
+
 [tool.black]
 line-length = 88
 target-version = [
-    "py312",
+    "py38",
 ]
 
 [tool.isort]
@@ -67,6 +63,7 @@ line_length = 88
 
 [tool.mypy]
 python_version = "3.12"
+mypy_path = "src"
 strict = true
 warn_return_any = true
 warn_unused_configs = true
@@ -96,11 +93,7 @@ python_functions = [
     "test_*",
 ]
 addopts = "-v --tb=short -x --strict-markers"
-markers = [
-    "xwschema_core: Core functionality tests (20% tests for 80% value)",
-    "xwschema_unit: Unit tests for individual components",
-    "xwschema_integration: Integration tests between components",
-]
+markers = []
 
 [tool.hatch.version]
 path = "src/exonware/xwschema/version.py"
@@ -112,13 +105,4 @@ only-include = [
 ]
 
 [tool.hatch.build.targets.sdist]
-include = [
-    "/src",
-    "/tests",
-    "/docs",
-    "/examples",
-    "/README.md",
-    "/LICENSE",
-    "/requirements.txt",
-    "/.github",
-]
+include = []

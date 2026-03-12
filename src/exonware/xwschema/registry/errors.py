@@ -1,13 +1,11 @@
 #!/usr/bin/env python3
 """
 #exonware/xwschema/src/exonware/xwschema/registry/errors.py
-
 Schema Registry Error Classes
-
 Company: eXonware.com
-Author: Eng. Muhammad AlShehri
+Author: eXonware Backend Team
 Email: connect@exonware.com
-Version: 0.0.1.2
+Version: 0.4.0.1
 Generation Date: 09-Nov-2025
 """
 

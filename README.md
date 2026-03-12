@@ -1,99 +1,61 @@
-# 🚀 **xschema: Schema Validation and Data Structure Definition Library**
+# xwschema
 
-**Company:** eXonware.com  
-**Author:** Eng. Muhammad AlShehri  
-**Email:** connect@exonware.com  
-**Version:** 0.0.1.2
+**Schema validation and data structure definition.** Define, validate, and evolve schemas with constraints, dynamic composition, and performance-optimized validation. Integrates with xwaction and the eXonware stack. Per project docs.
 
-## 🎯 **What is xschema?**
+**Company:** eXonware.com · **Author:** eXonware Backend Team · **Email:** connect@exonware.com  
+**Version:** See [version.py](src/exonware/xwschema/version.py) or PyPI. · **Updated:** See [version.py](src/exonware/xwschema/version.py) (`__date__`)
 
-xschema is a powerful Python library for schema validation and data structure definition. It provides a comprehensive framework for defining, validating, and evolving data schemas with support for complex constraints, dynamic composition, and performance-optimized validation.
+[![Status](https://img.shields.io/badge/status-beta-blue.svg)](https://exonware.com)
+[![Python](https://img.shields.io/badge/python-3.8%2B-blue.svg)](https://www.python.org)
+[![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 
-## ⚡ **Quick Start**
+---
 
-### **Installation**
+## Install
+
 ```bash
 pip install exonware-xwschema
 ```
 
-### **Basic Usage**
+---
+
+## Quick start
+
 ```python
-from exonware.xschema import *
-# Or use convenience import:
-# import xschema
+from exonware.xwschema import *
 
-# Your schema validation code here
+# Define and validate schemas; use with xwaction for workflow validation
+# See docs/ and REF_* for full API and examples
 ```
 
-## 🎯 **Perfect For:**
-
-- **🔍 Data Validation** - Comprehensive schema validation and constraint checking
-- **📋 Schema Definition** - Dynamic schema composition and evolution
-- **⚡ Performance** - High-performance validation for complex schemas
-- **🔄 Schema Evolution** - Support for schema versioning and migration
-- **🔗 Integration** - Seamless integration with xAction workflows
-
-## 🚀 **Key Features**
-
-✅ **Constraint-based validation** system for robust data checking  
-✅ **Dynamic schema composition** for flexible data structures  
-✅ **Performance-optimized validation** engine  
-✅ **Rich error reporting** with detailed context  
-✅ **Schema evolution support** for versioning  
-✅ **Integration with xAction** for workflow validation  
-✅ **Comprehensive test coverage** for reliability  
-
-## 🚀 **Project Phases**
-
-xSchema follows a structured 5-phase development approach designed to deliver enterprise-grade functionality while maintaining rapid iteration and continuous improvement.
-
-### **Current Phase: 🧪 Version 0 - Experimental Stage**
-- **Focus:** Fast applications & usage, refactoring to perfection of software patterns and design
-- **Status:** 🟢 **ACTIVE** - Foundation complete with constraint-based validation, dynamic composition, and comprehensive testing
-
-### **Development Roadmap:**
-- **Version 1 (Q1 2026):** Production Ready - Enterprise deployment and hardening
-- **Version 2 (Q2 2026):** Mars Standard Draft Implementation - Cross-platform interoperability
-- **Version 3 (Q3 2026):** RUST Core & Facades - High-performance multi-language support
-- **Version 4 (Q4 2026):** Mars Standard Implementation - Full compliance and enterprise deployment
-
-📖 **[View Complete Project Phases Documentation](docs/PROJECT_PHASES.md)**
-
-## 📚 **Documentation**
-
-- **[API Documentation](docs/)** - Complete reference and examples
-- **[Examples](examples/)** - Practical usage examples
-- **[Tests](tests/)** - Test suites and usage patterns
-- **[XWSyntax Integration](docs/XWSYNTAX_INTEGRATION.md)** - Collaboration opportunities with xwsyntax
-
-## 🔧 **Development**
-
-```bash
-# Install in development mode
-pip install -e .
-
-# Run tests
-python tests/runner.py
-
-# Run specific test types
-python tests/runner.py --core
-python tests/runner.py --unit
-python tests/runner.py --integration
-```
-
-## 🤝 **Contributing**
-
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Add tests
-5. Run the test suite
-6. Submit a pull request
-
-## 📄 **License**
-
-MIT License - see LICENSE file for details.
+See [docs/](docs/) for usage, REF_*, and GUIDE_01_USAGE when present.
 
 ---
 
-*Built with ❤️ by eXonware.com - Making schema validation effortless*
+## What you get
+
+| Area | What's in it |
+|------|----------------|
+| **Validation** | Constraint-based validation, rich error reporting. |
+| **Schema** | Dynamic composition, evolution, versioning. |
+| **Schema Catalog** | DDL-like API (create_schema, alter_schema, drop_schema) and **apply_migration** for schema evolution; JSON-backed catalog for schema-on-write with xwstorage/XWDB. See [docs/REF_15_API.md](docs/REF_15_API.md). |
+| **Integration** | xwaction workflow validation; eXonware ecosystem. |
+
+Current phase and status: see [docs/REF_22_PROJECT.md](docs/REF_22_PROJECT.md) or [docs/](docs/) when present.
+
+---
+
+## Docs and tests
+
+- **Start:** [docs/INDEX.md](docs/INDEX.md) or [docs/](docs/).
+- **Tests:** Run from project root per project layout.
+
+---
+
+## License and links
+
+MIT — see [LICENSE](LICENSE). **Homepage:** https://exonware.com · **Repository:** https://github.com/exonware/xwschema  
+
+Contributing → CONTRIBUTING.md · Security → SECURITY.md (when present).
+
+*Built with ❤️ by eXonware.com - Revolutionizing Python Development Since 2025*

@@ -1,0 +1,9 @@
+projects:
+  xwschema:
+    repo: xwschema
+    package_main: exonware-xwschema
+    package_wrapper: xwschema
+    python_version: "3.8"
+    has_wrapper: true
+    uses_check_versions: true
+

@@ -1,18 +1,14 @@
 #!/usr/bin/env python3
 """
 #exonware/xwschema/src/exonware/xwschema/validator.py
-
-XWSchema Validator Implementation
-
-This module provides schema validation implementation that reuses:
-- XWData for efficient data navigation
-- XWSystem.validation.contracts.ISchemaValidator interface
-- XWSystem validation utilities
-
+Default validation strategy (Option 5: Strategy + composition).
+Internal implementation of xwsystem.validation.contracts.ISchemaProvider.
+Used by the engine; not part of public API. Public API: XWSchema (facade).
+Entry point get_schema_validator() returns XWSchema({}).
 Company: eXonware.com
-Author: Eng. Muhammad AlShehri
+Author: eXonware Backend Team
 Email: connect@exonware.com
-Version: 0.0.1.2
+Version: 0.4.0.1
 Generation Date: 09-Nov-2025
 """
 
@@ -20,27 +16,13 @@ import re
 from typing import Any, Optional
 from dataclasses import dataclass
 from exonware.xwsystem import get_logger
-
-# Reuse XWData for data navigation
-try:
-    from exonware.xwdata import XWData
-except ImportError:
-    XWData = None
-
-# Reuse XWSystem validation interface
-try:
-    from exonware.xwsystem.validation.contracts import ISchemaValidator as XWSystemISchemaValidator
-except ImportError:
-    XWSystemISchemaValidator = None
-
-from .contracts import ISchemaValidator
+from exonware.xwsystem.validation.contracts import ISchemaProvider
+from exonware.xwdata import XWData
 from .errors import XWSchemaValidationError, XWSchemaTypeError, XWSchemaConstraintError
 from .defs import ValidationMode
-
 logger = get_logger(__name__)
-
-
 @dataclass
+
 class ValidationIssue:
     """Structured validation issue with node path and issue type."""
     node_path: str  # JSON Pointer-style path (e.g., "/users/0/name", "/age")
@@ -48,67 +30,48 @@ class ValidationIssue:
     message: str  # Human-readable error message
 
 
-class XWSchemaValidator(ISchemaValidator):
+class DefaultValidationStrategy(ISchemaProvider):
     """
-    Schema validator implementation.
-    
-    Reuses XWData for efficient data navigation and XWSystem validation utilities.
-    Implements ISchemaValidator interface for consistency.
+    Default validation strategy (internal). Implements ISchemaProvider.
+    Used by XWSchemaEngine; not public. Reuses XWData for navigation.
     """
-    
+
     def __init__(self, mode: ValidationMode = ValidationMode.STRICT):
-        """Initialize validator."""
         self._mode = mode
-        self._validation_cache: dict[str, tuple[bool, list[str]]] = {}
-        
-        logger.debug(f"XWSchemaValidator initialized (mode: {mode})")
-    
+        logger.debug(f"DefaultValidationStrategy initialized (mode: {mode})")
+
     def validate_schema(self, data: Any, schema: dict[str, Any]) -> tuple[bool, list[str]]:
         """
         Validate data against schema.
-        
-        Reuses XWData for efficient path-based validation when data is XWData instance.
-        
+        Reuses XWData for path-based validation. Validation results are not cached;
+        xwdata already caches load, navigation, and reference resolution.
         Args:
             data: Data to validate (can be dict, list, or XWData instance)
             schema: Schema definition (JSON Schema format)
-            
         Returns:
             Tuple of (is_valid, error_messages)
         """
-        try:
-            # Convert XWData to native if needed for validation
-            if XWData and isinstance(data, XWData):
-                # Use XWData for efficient navigation during validation
-                return self._validate_with_xwdata(data, schema)
-            else:
-                # Standard validation for native Python types
-                return self._validate_native(data, schema)
-        except Exception as e:
-            logger.error(f"Validation error: {e}")
-            return False, [f"Validation failed: {str(e)}"]
-    
+        if not isinstance(schema, dict):
+            return (False, [f"Schema must be a dict, got {type(schema).__name__}"])
+        return self._validate_with_xwdata(data, schema) if isinstance(data, XWData) else self._validate_native(data, schema)
+
     def validate_schema_issues(self, data: Any, schema: dict[str, Any], path: str = "") -> list[ValidationIssue]:
         """
         Validate data against schema and return structured issues.
-        
         Args:
             data: Data to validate (can be dict, list, or XWData instance)
             schema: Schema definition (JSON Schema format)
             path: Current JSON Pointer path (default: "" for root)
-            
         Returns:
             List of ValidationIssue objects with node_path and issue_type
         """
         issues: list[ValidationIssue] = []
-        
         try:
             # Convert XWData to native if needed
-            if XWData and isinstance(data, XWData):
+            if isinstance(data, XWData):
                 native_data = data.to_native()
             else:
                 native_data = data
-            
             # Validate and collect issues
             issues.extend(self._validate_native_issues(native_data, schema, path))
         except Exception as e:
@@ -118,21 +81,17 @@ class XWSchemaValidator(ISchemaValidator):
                 issue_type="validation_error",
                 message=f"Validation failed: {str(e)}"
             ))
-        
         return issues
-    
+
     def _validate_native_issues(self, data: Any, schema: dict[str, Any], path: str = "") -> list[ValidationIssue]:
         """Validate native Python data structure and return structured issues."""
         issues: list[ValidationIssue] = []
-        
         # Get schema type
         schema_type = schema.get('type')
         nullable = schema.get('nullable', False)
-        
         # Handle nullable
         if nullable and data is None:
             return issues
-        
         if schema_type:
             # Check null when nullable is False
             if not nullable and data is None:
@@ -143,7 +102,6 @@ class XWSchemaValidator(ISchemaValidator):
                         message=f"Value is null but nullable is False and type '{schema_type}' does not include 'null'"
                     ))
                     return issues
-            
             # Check type mismatch
             if data is not None and not self._validate_type_value(data, schema_type):
                 issues.append(ValidationIssue(
@@ -152,7 +110,6 @@ class XWSchemaValidator(ISchemaValidator):
                     message=f"Type mismatch: expected '{schema_type}', got '{type(data).__name__}'"
                 ))
                 return issues
-        
         # Validate enum
         if 'enum' in schema and data not in schema['enum']:
             issues.append(ValidationIssue(
@@ -160,7 +117,6 @@ class XWSchemaValidator(ISchemaValidator):
                 issue_type="enum_violation",
                 message=f"Value '{data}' not in enum {schema['enum']}"
             ))
-        
         # Validate string constraints
         if schema_type == 'string' and isinstance(data, str):
             if 'minLength' in schema and len(data) < schema['minLength']:
@@ -182,7 +138,6 @@ class XWSchemaValidator(ISchemaValidator):
                         issue_type="pattern_violation",
                         message=f"String does not match pattern '{schema['pattern']}'"
                     ))
-        
         # Validate number constraints
         if schema_type in ('number', 'integer') and isinstance(data, (int, float)):
             if 'minimum' in schema and data < schema['minimum']:
@@ -204,13 +159,11 @@ class XWSchemaValidator(ISchemaValidator):
                         issue_type="multiple_of_violation",
                         message=f"Value {data} is not a multiple of {schema['multipleOf']}"
                     ))
-        
         # Validate object properties
         if schema_type == 'object' and isinstance(data, dict):
             properties = schema.get('properties', {})
             required = schema.get('required', [])
             additional_properties = schema.get('additionalProperties', True)
-            
             # Check minProperties and maxProperties
             num_properties = len(data)
             if 'minProperties' in schema and num_properties < schema['minProperties']:
@@ -225,7 +178,6 @@ class XWSchemaValidator(ISchemaValidator):
                     issue_type="max_properties_violation",
                     message=f"Object has {num_properties} properties, but maxProperties is {schema['maxProperties']}"
                 ))
-            
             # Check required fields
             for field in required:
                 if field not in data:
@@ -235,14 +187,12 @@ class XWSchemaValidator(ISchemaValidator):
                         issue_type="missing_required",
                         message=f"Required field '{field}' is missing"
                     ))
-            
             # Validate each property
             for field, field_schema in properties.items():
                 if field in data:
                     field_path = f"{path}/{field}" if path else f"/{field}"
                     field_issues = self._validate_native_issues(data[field], field_schema, field_path)
                     issues.extend(field_issues)
-            
             # Check additionalProperties
             if additional_properties is False:
                 for field in data:
@@ -259,7 +209,6 @@ class XWSchemaValidator(ISchemaValidator):
                         field_path = f"{path}/{field}" if path else f"/{field}"
                         field_issues = self._validate_native_issues(data[field], additional_properties, field_path)
                         issues.extend(field_issues)
-        
         # Validate array items
         if schema_type == 'array' and isinstance(data, list):
             items_schema = schema.get('items', {})
@@ -290,44 +239,45 @@ class XWSchemaValidator(ISchemaValidator):
                             message=f"Array item at index {i} is duplicate (uniqueItems constraint violated)"
                         ))
                     seen.add(item_key)
-            
             for i, item in enumerate(data):
                 item_path = f"{path}/{i}" if path else f"/{i}"
                 item_issues = self._validate_native_issues(item, items_schema, item_path)
                 issues.extend(item_issues)
-        
         return issues
-    
+
     def _validate_with_xwdata(self, data: XWData, schema: dict[str, Any]) -> tuple[bool, list[str]]:
-        """Validate XWData instance using efficient path navigation."""
+        """
+        Validate XWData instance using efficient path navigation.
+        Fully reuses XWData's path-based access for validation:
+        - Uses XWData[key] for efficient field access
+        - Uses XWData.to_native() when needed for type checking
+        - No manual dict navigation - all access delegated to XWData
+        """
         errors: list[str] = []
-        
         # Get schema type
         schema_type = schema.get('type')
         if schema_type:
-            # Validate root type
+            # Validate root type - fully reuse XWData.to_native()
             native_data = data.to_native()
             if not self._validate_type_value(native_data, schema_type):
                 errors.append(f"Type mismatch: expected '{schema_type}', got '{type(native_data).__name__}'")
-        
         # Validate properties for objects
         if schema_type == 'object' or 'properties' in schema:
             properties = schema.get('properties', {})
             required = schema.get('required', [])
-            
             # Check required fields using XWData path navigation
+            # Fully reuse XWData's path-based access (data[field])
             for field in required:
                 try:
-                    value = data[field]
+                    value = data[field]  # XWData path-based access
                     if value is None:
                         errors.append(f"Required field '{field}' is missing or null")
                 except (KeyError, IndexError):
                     errors.append(f"Required field '{field}' is missing")
-            
-            # Validate each property
+            # Validate each property using XWData path access
             for field, field_schema in properties.items():
                 try:
-                    value = data[field]  # Efficient XWData path access
+                    value = data[field]  # Fully reuse XWData's efficient path-based access
                     if value is not None:
                         is_valid, field_errors = self.validate_schema(value, field_schema)
                         if not is_valid:
@@ -336,7 +286,6 @@ class XWSchemaValidator(ISchemaValidator):
                     # Field not present - only error if required
                     if field in required:
                         errors.append(f"Required field '{field}' is missing")
-        
         # Validate items for arrays
         if schema_type == 'array' or 'items' in schema:
             items_schema = schema.get('items', {})
@@ -346,21 +295,17 @@ class XWSchemaValidator(ISchemaValidator):
                     is_valid, item_errors = self.validate_schema(item, items_schema)
                     if not is_valid:
                         errors.extend([f"[{i}].{err}" for err in item_errors])
-        
         return len(errors) == 0, errors
-    
+
     def _validate_native(self, data: Any, schema: dict[str, Any]) -> tuple[bool, list[str]]:
         """Validate native Python data structure."""
         errors: list[str] = []
-        
         # Get schema type
         schema_type = schema.get('type')
         nullable = schema.get('nullable', False)
-        
         # Handle nullable: if nullable is True, None is always valid
         if nullable and data is None:
             return True, []
-        
         if schema_type:
             # If nullable is False and data is None, check if type includes 'null'
             if not nullable and data is None:
@@ -370,16 +315,13 @@ class XWSchemaValidator(ISchemaValidator):
                 else:
                     errors.append(f"Value is null but nullable is False and type '{schema_type}' does not include 'null'")
                     return False, errors
-            
             if not self._validate_type_value(data, schema_type):
                 errors.append(f"Type mismatch: expected '{schema_type}', got '{type(data).__name__}'")
                 return False, errors
-        
         # Validate enum
         if 'enum' in schema:
             if data not in schema['enum']:
                 errors.append(f"Value '{data}' not in enum {schema['enum']}")
-        
         # Validate string constraints
         if schema_type == 'string' and isinstance(data, str):
             if 'minLength' in schema and len(data) < schema['minLength']:
@@ -389,7 +331,6 @@ class XWSchemaValidator(ISchemaValidator):
             if 'pattern' in schema:
                 if not self.validate_pattern(data, schema['pattern']):
                     errors.append(f"String does not match pattern '{schema['pattern']}'")
-        
         # Validate number constraints
         if schema_type in ('number', 'integer') and isinstance(data, (int, float)):
             if 'minimum' in schema and data < schema['minimum']:
@@ -399,30 +340,25 @@ class XWSchemaValidator(ISchemaValidator):
             if 'multipleOf' in schema:
                 if data % schema['multipleOf'] != 0:
                     errors.append(f"Value {data} is not a multiple of {schema['multipleOf']}")
-        
         # Validate object properties
         if schema_type == 'object' and isinstance(data, dict):
             properties = schema.get('properties', {})
             required = schema.get('required', [])
             additional_properties = schema.get('additionalProperties', True)
-            
             # Check minProperties and maxProperties constraints
             num_properties = len(data)
             if 'minProperties' in schema and num_properties < schema['minProperties']:
                 errors.append(f"Object has {num_properties} properties, but minProperties is {schema['minProperties']}")
             if 'maxProperties' in schema and num_properties > schema['maxProperties']:
                 errors.append(f"Object has {num_properties} properties, but maxProperties is {schema['maxProperties']}")
-            
             for field in required:
                 if field not in data:
                     errors.append(f"Required field '{field}' is missing")
-            
             for field, field_schema in properties.items():
                 if field in data:
                     is_valid, field_errors = self.validate_schema(data[field], field_schema)
                     if not is_valid:
                         errors.extend([f"{field}.{err}" for err in field_errors])
-            
             # Check additionalProperties constraint
             if additional_properties is False:
                 # No additional properties allowed
@@ -436,7 +372,6 @@ class XWSchemaValidator(ISchemaValidator):
                         is_valid, field_errors = self.validate_schema(data[field], additional_properties)
                         if not is_valid:
                             errors.extend([f"{field}.{err}" for err in field_errors])
-        
         # Validate array items
         if schema_type == 'array' and isinstance(data, list):
             items_schema = schema.get('items', {})
@@ -456,20 +391,64 @@ class XWSchemaValidator(ISchemaValidator):
                     if item_key in seen:
                         errors.append(f"Array item at index {i} is duplicate (uniqueItems constraint violated)")
                     seen.add(item_key)
-            
             for i, item in enumerate(data):
                 is_valid, item_errors = self.validate_schema(item, items_schema)
                 if not is_valid:
                     errors.extend([f"[{i}].{err}" for err in item_errors])
-        
         return len(errors) == 0, errors
-    
-    def _validate_type_value(self, value: Any, expected_type: str) -> bool:
-        """Validate value type."""
-        return self.validate_type(value, expected_type)
-    
+
+    def _validate_type_value(self, value: Any, expected_type: str | list | dict) -> bool:
+        """
+        Validate value type.
+        Handles:
+        - String types (JSON Schema or class strings)
+        - List of types (anyOf - value must match at least one)
+        - Dict (anyOf/oneOf structures)
+        """
+        # Handle list of types (anyOf - value must match at least one)
+        if isinstance(expected_type, list):
+            for type_option in expected_type:
+                if self._validate_type_value(value, type_option):
+                    return True
+            return False
+        # Handle dict (anyOf/oneOf/etc.)
+        if isinstance(expected_type, dict):
+            # For anyOf, value must match at least one schema
+            if 'anyOf' in expected_type:
+                for schema in expected_type['anyOf']:
+                    if isinstance(schema, dict) and 'type' in schema:
+                        if self._validate_type_value(value, schema['type']):
+                            return True
+                return False
+            # For oneOf, value must match exactly one schema
+            if 'oneOf' in expected_type:
+                matches = 0
+                for schema in expected_type['oneOf']:
+                    if isinstance(schema, dict) and 'type' in schema:
+                        if self._validate_type_value(value, schema['type']):
+                            matches += 1
+                return matches == 1
+            # For allOf, value must match all schemas
+            if 'allOf' in expected_type:
+                for schema in expected_type['allOf']:
+                    if isinstance(schema, dict) and 'type' in schema:
+                        if not self._validate_type_value(value, schema['type']):
+                            return False
+                return True
+        # Handle string type (JSON Schema or class string)
+        if isinstance(expected_type, str):
+            return self.validate_type(value, expected_type)
+        return False
+
     def validate_type(self, data: Any, expected_type: str) -> bool:
-        """Validate data type."""
+        """
+        Validate data type.
+        Supports:
+        - JSON Schema types: "string", "integer", "number", etc.
+        - Class strings: "exonware.xwschema.XWSchema" (converts to class and checks isinstance/issubclass)
+        - Built-in types: "builtins.str", "builtins.int", etc.
+        """
+        # First check standard JSON Schema types
         type_map = {
             'string': str,
             'integer': int,
@@ -477,23 +456,38 @@ class XWSchemaValidator(ISchemaValidator):
             'boolean': bool,
             'array': (list, tuple),
             'object': dict,
-            'null': type(None)
+            'null': type(None),
+            'any': object  # Accept any type
         }
-        
         expected_python_type = type_map.get(expected_type)
-        if expected_python_type is None:
-            return False
-        
-        if isinstance(expected_python_type, tuple):
+        if expected_python_type is not None:
+            if isinstance(expected_python_type, tuple):
+                return isinstance(data, expected_python_type)
             return isinstance(data, expected_python_type)
-        return isinstance(data, expected_python_type)
-    
+        # Check if it's a class string (contains dots, likely a module.class path)
+        if '.' in expected_type and expected_type not in type_map:
+            from .type_utils import string_to_class
+            cls = string_to_class(expected_type)
+            if cls is not None:
+                # Check if data is an instance of the class
+                if isinstance(data, cls):
+                    return True
+                # For interfaces/ABCs, also check if data's class is a subclass
+                if hasattr(data, '__class__'):
+                    try:
+                        return issubclass(type(data), cls)
+                    except (TypeError, AttributeError):
+                        pass
+                return False
+        # Unknown type
+        return False
+
     def validate_range(self, data: Any, min_value: Any, max_value: Any) -> bool:
         """Validate data range."""
         if not isinstance(data, (int, float)):
             return False
         return min_value <= data <= max_value
-    
+
     def validate_pattern(self, data: str, pattern: str) -> bool:
         """Validate string pattern using regex."""
         try:
@@ -501,35 +495,29 @@ class XWSchemaValidator(ISchemaValidator):
         except re.error:
             logger.warning(f"Invalid regex pattern: {pattern}")
             return False
-    
-    def create_schema(self, data: Any) -> dict[str, Any]:
-        """
-        Create schema from data.
-        
-        This is a basic implementation. Full schema generation is handled by XWSchemaGenerator.
-        """
-        if isinstance(data, dict):
-            return {
-                'type': 'object',
-                'properties': {k: self.create_schema(v) for k, v in data.items()}
-            }
-        elif isinstance(data, (list, tuple)):
-            if len(data) > 0:
-                return {
-                    'type': 'array',
-                    'items': self.create_schema(data[0])
-                }
-            return {'type': 'array'}
-        elif isinstance(data, str):
-            return {'type': 'string'}
-        elif isinstance(data, int):
-            return {'type': 'integer'}
-        elif isinstance(data, float):
-            return {'type': 'number'}
-        elif isinstance(data, bool):
-            return {'type': 'boolean'}
-        elif data is None:
-            return {'type': 'null'}
-        else:
-            return {'type': 'string'}  # Default fallback
 
+    def create_schema(self, data: Any) -> dict[str, Any]:
+        """Create schema from data (delegates to DefaultGenerationStrategy)."""
+        from .generator import DefaultGenerationStrategy
+        from .defs import SchemaGenerationMode
+        gen = DefaultGenerationStrategy()
+        return gen._generate_from_native(data, SchemaGenerationMode.MINIMAL)
+# ---------------------------------------------------------------------------
+# Entry point for xwsystem.schema_validators (ISchemaProvider)
+# ---------------------------------------------------------------------------
+
+
+def get_schema_validator(*, mode: Optional[str] = None) -> ISchemaProvider:
+    """
+    Factory for xwsystem entry point xwsystem.schema_validators.
+    Returns the concrete ISchemaProvider implementation (XWSchema).
+    """
+    from .facade import XWSchema
+    from .config import XWSchemaConfig, ValidationConfig
+    config = XWSchemaConfig.default()
+    if mode:
+        try:
+            config = XWSchemaConfig(validation=ValidationConfig(mode=ValidationMode[mode]))
+        except (KeyError, TypeError):
+            pass
+    return XWSchema({}, config=config)

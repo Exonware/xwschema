@@ -1,8 +1,7 @@
 """
 Pytest configuration for core tests
-
 Company: eXonware.com
-Author: Eng. Muhammad AlShehri
+Author: eXonware Backend Team
 Email: connect@exonware.com
 Version: 0.0.1
 Generation Date: February 2, 2025
@@ -11,12 +10,11 @@ Generation Date: February 2, 2025
 import pytest
 import sys
 from pathlib import Path
-
 # Add src to Python path
 src_path = Path(__file__).parent.parent.parent / "src"
 sys.path.insert(0, str(src_path))
-
 @pytest.fixture(scope="session")
+
 def sample_data():
     """Sample data fixture for tests."""
     return {

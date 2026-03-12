@@ -1,25 +1,23 @@
 #!/usr/bin/env python3
 """
 #exonware/xwschema/src/exonware/xwschema/builder.py
-
 XWSchema Builder
-
 Provides builder pattern for creating schemas with all properties from old MIGRAT implementation.
-Supports all OpenAPI/JSON Schema properties with backward compatibility aliases.
-
+Supports all OpenAPI/JSON Schema properties.
 Company: eXonware.com
-Author: Eng. Muhammad AlShehri
+Author: eXonware Backend Team
 Email: connect@exonware.com
-Version: 0.0.1.2
+Version: 0.4.0.1
 Generation Date: 09-Nov-2025
 """
 
-from typing import Any, Optional, Union
+from typing import Any, Optional, Type
+import inspect
 from datetime import datetime
+# Fully reuse xwsystem for logging
 from exonware.xwsystem import get_logger
-
+from .type_utils import class_to_string, normalize_type
 logger = get_logger(__name__)
-
 # Capture NoneType at module level to avoid shadowing issues
 NoneType = type(None)
 
@@ -27,7 +25,6 @@ NoneType = type(None)
 class XWSchemaBuilder:
     """
     Builder for creating XWSchema instances with all properties.
-    
     Supports all properties from old MIGRAT implementation:
     - Basic: type, title, description, format, enum, default, nullable, deprecated, confidential
     - Field control: strict, alias, exclude
@@ -41,11 +38,11 @@ class XWSchemaBuilder:
     - Metadata: example, examples
     - References: ref, anchor
     """
-    
     @staticmethod
+
     def build_schema_dict(
         # Basic properties
-        type: Optional[Union[type, str]] = None,
+        type: Optional[type | str] = None,
         title: Optional[str] = None,
         description: Optional[str] = None,
         format: Optional[str] = None,
@@ -54,12 +51,10 @@ class XWSchemaBuilder:
         nullable: bool = False,
         deprecated: bool = False,
         confidential: bool = False,
-        
         # Field control
         strict: bool = False,
         alias: Optional[str] = None,
         exclude: bool = False,
-        
         # String constraints (OpenAPI standard naming)
         pattern: Optional[str] = None,
         length_min: Optional[int] = None,
@@ -67,97 +62,47 @@ class XWSchemaBuilder:
         strip_whitespace: bool = False,
         to_upper: bool = False,
         to_lower: bool = False,
-        
         # Numeric constraints (OpenAPI standard naming)
-        value_min: Optional[Union[int, float]] = None,
-        value_max: Optional[Union[int, float]] = None,
-        value_min_exclusive: Union[bool, float, int] = False,
-        value_max_exclusive: Union[bool, float, int] = False,
-        value_multiple_of: Optional[Union[int, float]] = None,
-        
+        value_min: Optional[int | float] = None,
+        value_max: Optional[int | float] = None,
+        value_min_exclusive: bool | float | int = False,
+        value_max_exclusive: bool | float | int = False,
+        value_multiple_of: Optional[int | float] = None,
         # Array constraints (OpenAPI standard naming)
         items: Optional[dict[str, Any]] = None,
         items_min: Optional[int] = None,
         items_max: Optional[int] = None,
         items_unique: bool = False,
-        
         # Object constraints (OpenAPI standard naming)
         properties: Optional[dict[str, dict[str, Any]]] = None,
         required: Optional[list[str]] = None,
-        properties_additional: Optional[Union[bool, dict[str, Any]]] = None,
+        properties_additional: Optional[bool | dict[str, Any]] = None,
         properties_min: Optional[int] = None,
         properties_max: Optional[int] = None,
-        
         # Logical constraints (OpenAPI standard naming)
         schema_all_of: Optional[list[dict[str, Any]]] = None,
         schema_any_of: Optional[list[dict[str, Any]]] = None,
         schema_one_of: Optional[list[dict[str, Any]]] = None,
         schema_not: Optional[dict[str, Any]] = None,
-        
         # Conditional constraints (OpenAPI standard naming)
         schema_if: Optional[dict[str, Any]] = None,
         schema_then: Optional[dict[str, Any]] = None,
         schema_else: Optional[dict[str, Any]] = None,
-        
         # Content constraints
         content_encoding: Optional[str] = None,
         content_media_type: Optional[str] = None,
         content_schema: Optional[dict[str, Any]] = None,
-        
         # Metadata
         example: Any = None,
         examples: Optional[dict[str, Any]] = None,
-        
         # References
         ref: Optional[str] = None,
         anchor: Optional[str] = None,
-        
-        # Backward compatibility aliases
-        **kwargs
     ) -> dict[str, Any]:
         """
         Build a JSON Schema dict from all properties.
-        
-        Supports backward compatibility aliases:
-        - min_length -> length_min
-        - max_length -> length_max
-        - minimum -> value_min
-        - maximum -> value_max
-        - min_items -> items_min
-        - max_items -> items_max
-        - additional_properties -> properties_additional
-        - all_of -> schema_all_of
-        - any_of -> schema_any_of
-        - one_of -> schema_one_of
-        - not_ -> schema_not
         """
-        
-        # Handle backward compatibility aliases
-        if 'min_length' in kwargs and length_min is None:
-            length_min = kwargs.pop('min_length')
-        if 'max_length' in kwargs and length_max is None:
-            length_max = kwargs.pop('max_length')
-        if 'minimum' in kwargs and value_min is None:
-            value_min = kwargs.pop('minimum')
-        if 'maximum' in kwargs and value_max is None:
-            value_max = kwargs.pop('maximum')
-        if 'min_items' in kwargs and items_min is None:
-            items_min = kwargs.pop('min_items')
-        if 'max_items' in kwargs and items_max is None:
-            items_max = kwargs.pop('max_items')
-        if 'additional_properties' in kwargs and properties_additional is None:
-            properties_additional = kwargs.pop('additional_properties')
-        if 'all_of' in kwargs and schema_all_of is None:
-            schema_all_of = kwargs.pop('all_of')
-        if 'any_of' in kwargs and schema_any_of is None:
-            schema_any_of = kwargs.pop('any_of')
-        if 'one_of' in kwargs and schema_one_of is None:
-            schema_one_of = kwargs.pop('one_of')
-        if 'not_' in kwargs and schema_not is None:
-            schema_not = kwargs.pop('not_')
-        
         schema_dict: dict[str, Any] = {}
-        
         # Convert Python type to JSON Schema type string
         type_map = {
             str: 'string',
@@ -169,16 +114,17 @@ class XWSchemaBuilder:
             tuple: 'array',
             NoneType: 'null'
         }
-        
         # Basic properties
         if type is not None:
-            if isinstance(type, str):
-                schema_dict['type'] = type
-            elif type in type_map:
+            # Built-in types -> JSON Schema type name; other classes -> string representation
+            if type in type_map:
                 schema_dict['type'] = type_map[type]
+            elif isinstance(type, str):
+                schema_dict['type'] = type
+            elif inspect.isclass(type):
+                schema_dict['type'] = class_to_string(type)
             else:
-                schema_dict['type'] = str(type)
-        
+                schema_dict['type'] = normalize_type(type)
         if title:
             schema_dict['title'] = title
         if description:
@@ -195,7 +141,6 @@ class XWSchemaBuilder:
             schema_dict['deprecated'] = deprecated
         if confidential:
             schema_dict['x-confidential'] = confidential  # Custom extension
-        
         # Field control (custom extensions)
         if strict:
             schema_dict['x-strict'] = strict
@@ -203,7 +148,6 @@ class XWSchemaBuilder:
             schema_dict['x-alias'] = alias
         if exclude:
             schema_dict['x-exclude'] = exclude
-        
         # String constraints
         if pattern:
             schema_dict['pattern'] = pattern
@@ -217,7 +161,6 @@ class XWSchemaBuilder:
             schema_dict['toUpper'] = to_upper
         if to_lower:
             schema_dict['toLower'] = to_lower
-        
         # Numeric constraints
         if value_min is not None:
             if isinstance(value_min_exclusive, (int, float)) and not isinstance(value_min_exclusive, bool):
@@ -231,7 +174,6 @@ class XWSchemaBuilder:
             # Handle case where value_min_exclusive is True but value_min is None
             # This sets exclusiveMinimum flag without a minimum value (edge case)
             schema_dict['exclusiveMinimum'] = True
-        
         if value_max is not None:
             if isinstance(value_max_exclusive, (int, float)) and not isinstance(value_max_exclusive, bool):
                 schema_dict['exclusiveMaximum'] = value_max_exclusive
@@ -244,10 +186,8 @@ class XWSchemaBuilder:
             # Handle case where value_max_exclusive is True but value_max is None
             # This sets exclusiveMaximum flag without a maximum value (edge case)
             schema_dict['exclusiveMaximum'] = True
-        
         if value_multiple_of is not None:
             schema_dict['multipleOf'] = value_multiple_of
-        
         # Array constraints
         if items:
             schema_dict['items'] = items
@@ -257,7 +197,6 @@ class XWSchemaBuilder:
             schema_dict['maxItems'] = items_max
         if items_unique:
             schema_dict['uniqueItems'] = items_unique
-        
         # Object constraints
         if properties:
             schema_dict['properties'] = properties
@@ -272,7 +211,6 @@ class XWSchemaBuilder:
             schema_dict['minProperties'] = properties_min
         if properties_max is not None:
             schema_dict['maxProperties'] = properties_max
-        
         # Logical constraints
         if schema_all_of:
             schema_dict['allOf'] = schema_all_of
@@ -282,7 +220,6 @@ class XWSchemaBuilder:
             schema_dict['oneOf'] = schema_one_of
         if schema_not:
             schema_dict['not'] = schema_not
-        
         # Conditional constraints
         if schema_if:
             schema_dict['if'] = schema_if
@@ -290,7 +227,6 @@ class XWSchemaBuilder:
             schema_dict['then'] = schema_then
         if schema_else:
             schema_dict['else'] = schema_else
-        
         # Content constraints
         if content_encoding:
             schema_dict['contentEncoding'] = content_encoding
@@ -298,21 +234,16 @@ class XWSchemaBuilder:
             schema_dict['contentMediaType'] = content_media_type
         if content_schema:
             schema_dict['contentSchema'] = content_schema
-        
         # Metadata
         if example is not None:
             schema_dict['example'] = example
         if examples:
             schema_dict['examples'] = examples
-        
         # References
         if ref:
             schema_dict['$ref'] = ref
         if anchor:
             schema_dict['$anchor'] = anchor
-        
         # Custom properties from kwargs
         schema_dict.update(kwargs)
-        
         return schema_dict
-

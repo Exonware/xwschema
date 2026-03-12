@@ -2,15 +2,14 @@
 #exonware/xwschema/src/exonware/xwschema/formats/__init__.py
 """
 Schema formats and registry support.
-
 Company: eXonware.com
-Author: Eng. Muhammad AlShehri
+Author: eXonware Backend Team
 Email: connect@exonware.com
-Version: 0.0.1.2
+Version: 0.4.0.1
 Generation Date: 09-Nov-2025
 """
-
 # Abstract base for all schema serializers
+
 from .base import (
     ASchemaSerialization,
     SchemaPrimitiveType,
@@ -18,7 +17,6 @@ from .base import (
     SchemaTypeMapper,
     SchemaPropertyMapper,
 )
-
 # Schema format serializers (extend ASchemaSerialization)
 from . import schema
 from .schema import (
@@ -31,7 +29,6 @@ from .schema import (
     WsdlSchemaSerializer,
     SwaggerSchemaSerializer,
 )
-
 __all__ = [
     # Abstract base
     'ASchemaSerialization',

@@ -1,11 +1,11 @@
-# {xschema} Requirements
+# {xwschema} Requirements
 # Company: eXonware.com
-# Author: Eng. Muhammad AlShehri
+# Author: eXonware Backend Team
 # Email: connect@exonware.com
 # Version: 0.0.1.2
 # Generation Date: February 2, 2025
 #
-# This file contains all dependencies needed for {xschema}
+# This file contains all dependencies needed for {xwschema}
 # Compatible with Python 3.8+ for maximum compatibility
 #
 # Usage:
@@ -17,8 +17,10 @@
 # =============================================================================
 # CORE DEPENDENCIES
 # =============================================================================
-
-exonware-xwsystem>=0.0.1           # Foundation library
+# Source size (src/*): ~350.2 KB
+pip                     # Package installer (CI and lazy install)
+exonware-xwsystem           # Foundation library
+exonware-xwdata             # Schema load/save and conversion (no direct xwjson)
 
 # Schema Registry Support
 boto3>=1.26.0                       # AWS Glue Schema Registry (~1 MB)
@@ -75,10 +77,35 @@ mypy>=0.950                          # Static type checking
 # =============================================================================
 #
 # After installing requirements, verify with:
-#   python -c "from exonware.{xschema} import *; print('✅ {xschema} loaded!')"
+#   python -c "from exonware.{xwschema} import *; print('✅ {xwschema} loaded!')"
 #
 # Or run comprehensive verification:
 #   python tests/verify_installation.py
 #
 # Expected output:
-#   🎉 SUCCESS! exonware.{xschema} is ready to use!
+#   🎉 SUCCESS! exonware.{xwschema} is ready to use!
+aiofiles
+cryptography
+bcrypt
+psutil
+opentelemetry-api
+cachebox
+cachetools
+pylru
+msgspec
+orjson
+hyperlight_hyperjson
+json5
+PyYAML
+tomli-w
+xmltodict
+dicttoxml
+msgpack
+cbor2
+pymongo
+httpx
+brotli
+zstandard
+rich
+attrs
+tomli

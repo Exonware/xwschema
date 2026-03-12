@@ -1,0 +1,382 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "Mail Server API",
+    "description": "REST API for sending, receiving, and managing email. Supports IMAP, SMTP, folders, and attachments.",
+    "version": "1.2.0",
+    "contact": {
+      "name": "API Support",
+      "email": "api@mail.example.com",
+      "url": "https://mail.example.com/support"
+    },
+    "license": {
+      "name": "Apache 2.0",
+      "url": "https://www.apache.org/licenses/LICENSE-2.0"
+    }
+  },
+  "servers": [
+    {
+      "url": "https://api.mail.example.com/v1",
+      "description": "Production"
+    },
+    {
+      "url": "https://sandbox.mail.example.com/v1",
+      "description": "Sandbox",
+      "variables": {
+        "env": { "default": "sandbox" }
+      }
+    }
+  ],
+  "paths": {
+    "/send": {
+      "post": {
+        "operationId": "sendEmail",
+        "summary": "Send an email",
+        "description": "Submit a single email for delivery. Supports HTML and plain text, attachments, CC/BCC.",
+        "tags": ["Mail"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SendMailRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "202": {
+            "description": "Accepted for delivery",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/MessageIdResponse" }
+              }
+            }
+          },
+          "400": { "description": "Invalid request body" },
+          "429": { "description": "Rate limit exceeded" }
+        },
+        "security": [{ "bearerAuth": [] }]
+      }
+    },
+    "/folders": {
+      "get": {
+        "operationId": "listFolders",
+        "summary": "List mail folders",
+        "tags": ["Folders"],
+        "parameters": [
+          {
+            "name": "includeHidden",
+            "in": "query",
+            "schema": { "type": "boolean", "default": false }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": { "type": "integer", "minimum": 1, "maximum": 100, "default": 50 }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of folders",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "folders": {
+                      "type": "array",
+                      "items": { "$ref": "#/components/schemas/Folder" }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [{ "bearerAuth": [] }]
+      },
+      "post": {
+        "operationId": "createFolder",
+        "summary": "Create a folder",
+        "tags": ["Folders"],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["name"],
+                "properties": {
+                  "name": { "type": "string" },
+                  "parentId": { "type": "string", "format": "uuid" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Folder created",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Folder" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/folders/{folderId}/messages": {
+      "get": {
+        "operationId": "listMessages",
+        "summary": "List messages in a folder",
+        "tags": ["Messages"],
+        "parameters": [
+          {
+            "name": "folderId",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" }
+          },
+          {
+            "name": "since",
+            "in": "query",
+            "schema": { "type": "string", "format": "date-time" }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": { "type": "integer", "minimum": 1, "maximum": 100, "default": 20 }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of message summaries",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "messages": {
+                      "type": "array",
+                      "items": { "$ref": "#/components/schemas/MessageSummary" }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/messages/{messageId}": {
+      "get": {
+        "operationId": "getMessage",
+        "summary": "Get a single message",
+        "tags": ["Messages"],
+        "parameters": [
+          {
+            "name": "messageId",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Full message",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Message" }
+              }
+            }
+          },
+          "404": { "description": "Message not found" }
+        }
+      },
+      "delete": {
+        "operationId": "deleteMessage",
+        "summary": "Delete a message",
+        "tags": ["Messages"],
+        "parameters": [
+          {
+            "name": "messageId",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string" }
+          }
+        ],
+        "responses": {
+          "204": { "description": "Deleted" },
+          "404": { "description": "Message not found" }
+        }
+      }
+    },
+    "/search": {
+      "post": {
+        "operationId": "searchMessages",
+        "summary": "Search messages",
+        "tags": ["Search"],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "query": { "type": "string" },
+                  "folders": { "type": "array", "items": { "type": "string" } },
+                  "fromDate": { "type": "string", "format": "date-time" },
+                  "toDate": { "type": "string", "format": "date-time" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Search results",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "matches": {
+                      "type": "array",
+                      "items": { "$ref": "#/components/schemas/MessageSummary" }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "SendMailRequest": {
+        "type": "object",
+        "required": ["to", "subject"],
+        "properties": {
+          "to": {
+            "type": "array",
+            "items": { "type": "string", "format": "email" },
+            "minItems": 1
+          },
+          "cc": { "type": "array", "items": { "type": "string", "format": "email" } },
+          "bcc": { "type": "array", "items": { "type": "string", "format": "email" } },
+          "subject": { "type": "string" },
+          "bodyPlain": { "type": "string" },
+          "bodyHtml": { "type": "string" },
+          "attachments": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "filename": { "type": "string" },
+                "contentType": { "type": "string" },
+                "content": { "type": "string", "contentEncoding": "base64" }
+              }
+            }
+          },
+          "replyTo": { "type": "string", "format": "email" }
+        }
+      },
+      "MessageIdResponse": {
+        "type": "object",
+        "properties": {
+          "messageId": { "type": "string" },
+          "status": { "type": "string", "enum": ["queued", "sent"] }
+        }
+      },
+      "Folder": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string", "format": "uuid" },
+          "name": { "type": "string" },
+          "parentId": { "type": "string", "format": "uuid" },
+          "messageCount": { "type": "integer", "minimum": 0 },
+          "unreadCount": { "type": "integer", "minimum": 0 }
+        }
+      },
+      "MessageSummary": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" },
+          "from": { "type": "string" },
+          "subject": { "type": "string" },
+          "date": { "type": "string", "format": "date-time" },
+          "isRead": { "type": "boolean" },
+          "hasAttachments": { "type": "boolean" }
+        }
+      },
+      "Message": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" },
+          "from": { "type": "string" },
+          "to": { "type": "array", "items": { "type": "string" } },
+          "subject": { "type": "string" },
+          "bodyPlain": { "type": "string" },
+          "bodyHtml": { "type": "string" },
+          "date": { "type": "string", "format": "date-time" },
+          "attachments": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "filename": { "type": "string" },
+                "contentType": { "type": "string" },
+                "size": { "type": "integer" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT",
+        "description": "JWT token from /auth/login"
+      },
+      "apiKey": {
+        "type": "apiKey",
+        "in": "header",
+        "name": "X-API-Key"
+      }
+    }
+  },
+  "security": [{ "bearerAuth": [] }],
+  "tags": [
+    { "name": "Mail", "description": "Sending and receiving email" },
+    { "name": "Folders", "description": "Folder management" },
+    { "name": "Messages", "description": "Message operations" },
+    { "name": "Search", "description": "Full-text search" }
+  ],
+  "x-settings": {
+    "logging": {
+      "level": "info",
+      "format": "json",
+      "output": "stdout"
+    },
+    "rateLimit": {
+      "requestsPerMinute": 120,
+      "burst": 20
+    },
+    "features": {
+      "attachments": true,
+      "threading": true,
+      "search": true,
+      "imap": true,
+      "smtp": true
+    },
+    "storage": {
+      "backend": "local",
+      "maxMessageSize": 52428800,
+      "retentionDays": 365
+    }
+  }
+}

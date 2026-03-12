@@ -1,12 +1,10 @@
 #!/usr/bin/env python3
 """
 #exonware/xwschema/tests/1.unit/runner.py
-
 Unit test runner for xwschema
 Orchestrates all unit test modules.
-
 Company: eXonware.com
-Author: Eng. Muhammad AlShehri
+Author: eXonware Backend Team
 Email: connect@exonware.com
 Version: 0.0.1.1
 Generation Date: 09-Nov-2025
@@ -14,7 +12,6 @@ Generation Date: 09-Nov-2025
 
 import sys
 from pathlib import Path
-
 # ⚠️ CRITICAL: Configure UTF-8 encoding for Windows console (GUIDE_TEST.md compliance)
 if sys.platform == "win32":
     try:
@@ -23,36 +20,10 @@ if sys.platform == "win32":
         sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
     except Exception:
         pass  # If reconfiguration fails, continue with default encoding
-
 # Add src to Python path for imports
 src_path = Path(__file__).parent.parent.parent / "src"
 sys.path.insert(0, str(src_path))
-
-# Try to import reusable utilities from xwsystem
-try:
-    from exonware.xwsystem.utils.test_runner import TestRunner
-    USE_XWSYSTEM_UTILS = True
-except ImportError:
-    USE_XWSYSTEM_UTILS = False
-    # Fallback implementation
-    import subprocess
-    
-    class TestRunner:
-        """Fallback TestRunner without xwsystem utilities."""
-        def __init__(self, library_name: str, layer_name: str, description: str, test_dir: Path, markers: list[str] = None):
-            self.library_name = library_name
-            self.layer_name = layer_name
-            self.description = description
-            self.test_dir = test_dir
-            self.markers = markers or []
-        
-        def run(self) -> int:
-            """Run tests using pytest."""
-            cmd = [sys.executable, "-m", "pytest", str(self.test_dir), "-v", "--tb=short", "-x"]
-            if self.markers:
-                cmd.extend(["-m", " or ".join(self.markers)])
-            result = subprocess.run(cmd)
-            return result.returncode
+from exonware.xwsystem.utils.test_runner import TestRunner
 
 if __name__ == "__main__":
     runner = TestRunner(
@@ -63,4 +34,3 @@ if __name__ == "__main__":
         markers=["xwschema_unit"]
     )
     sys.exit(runner.run())
-
