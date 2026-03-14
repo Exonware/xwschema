@@ -6,12 +6,12 @@ Provides convenience methods for BaaS schema operations.
 Company: eXonware.com
 Author: eXonware Backend Team
 Email: connect@exonware.com
-Version: 0.4.0.1
+Version: 0.4.0.2
 Generation Date: 26-Jan-2026
 NOTE: This is an OPTIONAL module for BaaS platform integration.
 """
 
-from typing import Any, Optional
+from typing import Any
 from pathlib import Path
 from exonware.xwsystem import get_logger
 from ..facade import XWSchema
@@ -70,7 +70,7 @@ class XWSchemaBaaSFacade:
         schema: dict[str, Any],
         from_format: SchemaFormat,
         to_format: SchemaFormat,
-        intermediate_formats: Optional[list[SchemaFormat]] = None,
+        intermediate_formats: list[SchemaFormat] | None = None,
         **opts
     ) -> dict[str, Any]:
         """
@@ -91,7 +91,7 @@ class XWSchemaBaaSFacade:
     # VALIDATION PIPELINES
     # ============================================================================
 
-    def create_validation_pipeline(self, name: Optional[str] = None) -> ValidationPipeline:
+    def create_validation_pipeline(self, name: str | None = None) -> ValidationPipeline:
         """
         Create a new validation pipeline.
         Args:

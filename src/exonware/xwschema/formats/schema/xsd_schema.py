@@ -7,11 +7,11 @@ Reuses XML serializer from xwsystem.
 Company: eXonware.com
 Author: eXonware Backend Team
 Email: connect@exonware.com
-Version: 0.4.0.1
+Version: 0.4.0.2
 Generation Date: 09-Nov-2025
 """
 
-from typing import Any, Optional
+from typing import Any
 # Reuse xwsystem XML serializer
 from exonware.xwsystem.io.serialization.formats.text.xml import XmlSerializer
 from exonware.xwsystem.io.serialization.contracts import EncodeOptions, DecodeOptions
@@ -130,7 +130,7 @@ class XsdSchemaSerializer(ASchemaSerialization):
     # CORE SERIALIZATION (Delegate to XmlSerializer)
     # ========================================================================
 
-    def encode(self, value: Any, *, options: Optional[EncodeOptions] = None) -> bytes | str:
+    def encode(self, value: Any, *, options: EncodeOptions | None = None) -> bytes | str:
         """
         Encode XSD schema to string.
         Fully reuses xwsystem's XmlSerializer for encoding.
@@ -142,7 +142,7 @@ class XsdSchemaSerializer(ASchemaSerialization):
         # Reuse XML serializer
         return self._xml_serializer.encode(value, options=options)
 
-    def decode(self, repr: bytes | str, *, options: Optional[DecodeOptions] = None) -> Any:
+    def decode(self, repr: bytes | str, *, options: DecodeOptions | None = None) -> Any:
         """
         Decode XSD schema from string.
         Fully reuses xwsystem's XmlSerializer for decoding.

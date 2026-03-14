@@ -7,11 +7,11 @@ Basic implementation - full Protobuf IDL parser can be added later.
 Company: eXonware.com
 Author: eXonware Backend Team
 Email: connect@exonware.com
-Version: 0.4.0.1
+Version: 0.4.0.2
 Generation Date: 09-Nov-2025
 """
 
-from typing import Any, Optional
+from typing import Any
 from pathlib import Path
 from exonware.xwsystem.io.serialization.contracts import EncodeOptions, DecodeOptions
 from exonware.xwsystem.io.defs import CodecCapability
@@ -124,7 +124,7 @@ class ProtobufSchemaSerializer(ASchemaSerialization):
     # CORE SERIALIZATION (Text-based IDL)
     # ========================================================================
 
-    def encode(self, value: Any, *, options: Optional[EncodeOptions] = None) -> bytes | str:
+    def encode(self, value: Any, *, options: EncodeOptions | None = None) -> bytes | str:
         """
         Encode Protobuf schema to string.
         Protobuf uses IDL (Interface Definition Language) text format.
@@ -141,7 +141,7 @@ class ProtobufSchemaSerializer(ASchemaSerialization):
         else:
             raise SerializationError(f"Cannot encode {type(value).__name__} as Protobuf schema")
 
-    def decode(self, repr: bytes | str, *, options: Optional[DecodeOptions] = None) -> Any:
+    def decode(self, repr: bytes | str, *, options: DecodeOptions | None = None) -> Any:
         """
         Decode Protobuf schema from string.
         Parses Protobuf IDL into structured format (basic implementation).
@@ -183,9 +183,9 @@ class ProtobufSchemaSerializer(ASchemaSerialization):
         # Basic parsing: extract protobuf definitions
         # This is a simplified parser - full parser would use protobuf library
         lines = idl.split('\n')
-        current_message: Optional[str] = None
-        current_enum: Optional[str] = None
-        current_service: Optional[str] = None
+        current_message: str | None = None
+        current_enum: str | None = None
+        current_service: str | None = None
         in_block = False
         brace_level = 0
         for line in lines:

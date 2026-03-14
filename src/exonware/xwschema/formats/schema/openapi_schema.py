@@ -7,11 +7,11 @@ Reuses JSON/YAML serializers from xwsystem.
 Company: eXonware.com
 Author: eXonware Backend Team
 Email: connect@exonware.com
-Version: 0.4.0.1
+Version: 0.4.0.2
 Generation Date: 09-Nov-2025
 """
 
-from typing import Any, Optional
+from typing import Any
 from pathlib import Path
 # Reuse xwsystem serializers
 from exonware.xwsystem.io.serialization.formats.text.json import JsonSerializer
@@ -128,7 +128,7 @@ class OpenApiSchemaSerializer(ASchemaSerialization):
     # CORE SERIALIZATION (Delegate to JsonSerializer/YamlSerializer)
     # ========================================================================
 
-    def encode(self, value: Any, *, options: Optional[EncodeOptions] = None) -> bytes | str:
+    def encode(self, value: Any, *, options: EncodeOptions | None = None) -> bytes | str:
         """
         Encode OpenAPI specification to string.
         Fully reuses xwsystem's JsonSerializer and YamlSerializer for encoding.
@@ -144,7 +144,7 @@ class OpenApiSchemaSerializer(ASchemaSerialization):
         else:
             return self._json_serializer.encode(value, options=options)
 
-    def decode(self, repr: bytes | str, *, options: Optional[DecodeOptions] = None) -> Any:
+    def decode(self, repr: bytes | str, *, options: DecodeOptions | None = None) -> Any:
         """
         Decode OpenAPI specification from string.
         Fully reuses xwsystem's JsonSerializer and YamlSerializer for decoding.

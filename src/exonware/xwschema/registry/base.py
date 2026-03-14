@@ -5,12 +5,12 @@ Schema Registry Base Classes
 Company: eXonware.com
 Author: eXonware Backend Team
 Email: connect@exonware.com
-Version: 0.4.0.1
+Version: 0.4.0.2
 Generation Date: 09-Nov-2025
 """
 
 from abc import ABC, abstractmethod
-from typing import Optional, TYPE_CHECKING
+from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from .schema_registry import SchemaInfo
 from .defs import CompatibilityLevel

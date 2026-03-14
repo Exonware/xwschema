@@ -16,8 +16,8 @@ Generation Date: 15-Dec-2025
 
 import pytest
 import inspect
-from typing import Dict, Optional
 from exonware.xwschema import XWSchema
+from collections.abc import Callable
 @pytest.mark.xwschema_core
 
 class TestExtractProperties:
@@ -197,8 +197,7 @@ class TestExtractParameters:
 
     def test_extract_parameters_with_optional_types(self):
         """Test extracting parameters with Optional types."""
-        from typing import Optional
-        def test_func(name: str, age: Optional[int] = None) -> Optional[str]:
+        def test_func(name: str, age: int | None = None) -> str | None:
             return name
         in_schemas, out_schemas = XWSchema.extract_parameters(test_func)
         # Should handle Optional types
@@ -207,7 +206,7 @@ class TestExtractParameters:
 
     def test_extract_parameters_with_complex_types(self):
         """Test extracting parameters with complex types."""
-        def test_func(items: list[str], metadata: dict[str, int]) -> list[Dict]:
+        def test_func(items: list[str], metadata: dict[str, int]) -> list[dict]:
             return []
         in_schemas, out_schemas = XWSchema.extract_parameters(test_func)
         # Should handle complex types
@@ -542,7 +541,6 @@ class TestSchemaUtilitiesEdgeCases:
 
     def test_extract_parameters_with_callable_type(self):
         """Test extracting parameters with Callable type."""
-        from typing import Callable
         def func_with_callable(fn: Callable[[int], str]) -> Callable:
             return fn
         in_schemas, out_schemas = XWSchema.extract_parameters(func_with_callable)
@@ -802,12 +800,11 @@ class TestSchemaUtilitiesStress:
 
     def test_extract_parameters_with_complex_nested_types(self):
         """Test extracting parameters with complex nested generic types."""
-        from typing import Optional
         def complex_func(
-            items: list[dict[str, Optional[int]]],
+            items: list[dict[str, int | None]],
             metadata: dict[str, list[tuple[int, str]]],
             nested: list[list[dict[str, str]]]
-        ) -> dict[str, list[Optional[str]]]:
+        ) -> dict[str, list[str | None]]:
             return {}
         in_schemas, out_schemas = XWSchema.extract_parameters(complex_func)
         # Should handle complex nested types

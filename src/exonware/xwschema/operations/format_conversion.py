@@ -8,13 +8,13 @@ xwschema does not use xwjson directly. When cache_size > 0, reuses xwsystem crea
 Company: eXonware.com
 Author: eXonware Backend Team
 Email: connect@exonware.com
-Version: 0.4.0.1
+Version: 0.4.0.2
 Generation Date: 26-Jan-2026
 NOTE: This is an OPTIONAL module for BaaS platform integration.
 """
 
 import hashlib
-from typing import Any, Optional
+from typing import Any
 from pathlib import Path
 from exonware.xwsystem import get_logger
 from ..contracts import ISchemaFormatConverter

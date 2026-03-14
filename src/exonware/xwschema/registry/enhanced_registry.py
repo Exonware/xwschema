@@ -6,12 +6,12 @@ Enhances schema registry with BaaS-specific features like discovery and versioni
 Company: eXonware.com
 Author: eXonware Backend Team
 Email: connect@exonware.com
-Version: 0.4.0.1
+Version: 0.4.0.2
 Generation Date: 26-Jan-2026
 NOTE: This is an OPTIONAL module for BaaS platform integration.
 """
 
-from typing import Any, Optional
+from typing import Any
 from pathlib import Path
 from exonware.xwsystem import get_logger
 from ...errors import XWSchemaError
@@ -42,7 +42,7 @@ class SchemaRegistryManager:
         self,
         name: str,
         schema: dict[str, Any],
-        version: Optional[str] = None,
+        version: str | None = None,
         **opts
     ) -> None:
         """
@@ -69,7 +69,7 @@ class SchemaRegistryManager:
     async def get_schema(
         self,
         name: str,
-        version: Optional[str] = None,
+        version: str | None = None,
         **opts
     ) -> dict[str, Any]:
         """

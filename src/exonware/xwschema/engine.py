@@ -6,12 +6,13 @@ Orchestrates xwschema; load/save via xwdata (xwdata uses xwsystem for I/O). Vali
 Company: eXonware.com
 Author: eXonware Backend Team
 Email: connect@exonware.com
-Version: 0.4.0.1
+Version: 0.4.0.2
 Generation Date: 09-Nov-2025
 """
 
-from typing import Any, Optional, Union
+from typing import Any
 from pathlib import Path
+import json as _json
 from exonware.xwsystem import get_logger
 from exonware.xwdata import XWData
 from .base import ASchemaEngine
@@ -59,15 +60,15 @@ class XWSchemaEngine(ASchemaEngine):
     $ref resolution uses xwdata ReferenceResolver. Validation and generation in-house.
     """
 
-    def __init__(self, config: Optional[XWSchemaConfig] = None):
+    def __init__(self, config: XWSchemaConfig | None = None):
         super().__init__(config)
         self._config = config or XWSchemaConfig.default()
-        self._validation_strategy: Optional[DefaultValidationStrategy] = None
-        self._generation_strategy: Optional[DefaultGenerationStrategy] = None
+        self._validation_strategy: DefaultValidationStrategy | None = None
+        self._generation_strategy: DefaultGenerationStrategy | None = None
         logger.debug("XWSchemaEngine initialized")
     @staticmethod
 
-    def _schema_format_to_str(format: Optional[SchemaFormat]) -> Optional[str]:
+    def _schema_format_to_str(format: SchemaFormat | None) -> str | None:
         """Map SchemaFormat to xwdata format string."""
         if not format:
             return None
@@ -109,7 +110,7 @@ class XWSchemaEngine(ASchemaEngine):
     # SCHEMA LOADING
     # ==========================================================================
 
-    async def load_schema(self, path: Union[str, Path], format: Optional[SchemaFormat] = None) -> dict[str, Any]:
+    async def load_schema(self, path: str | Path, format: SchemaFormat | None = None) -> dict[str, Any]:
         """
         Load schema from file or URL.
         Uses XWData.load() for file I/O (caching, format detection). Resolves $ref using
@@ -128,9 +129,27 @@ class XWSchemaEngine(ASchemaEngine):
                 if is_url
                 else self._detect_schema_format(Path(source))
             )
-        format_hint = self._schema_format_to_str(format)
-        data = await XWData.load(source, format_hint=format_hint)
-        schema_dict = data.to_native()
+        schema_dict: dict[str, Any]
+        if not is_url and format == SchemaFormat.JSON_SCHEMA:
+            path_obj = Path(source)
+            if path_obj.is_file():
+                try:
+                    with open(path_obj, encoding="utf-8") as f:
+                        schema_dict = _json.load(f)
+                except Exception as e:
+                    raise XWSchemaParseError(
+                        f"Failed to load JSON schema file: {e}",
+                        path=source,
+                        format=format.name,
+                    ) from e
+            else:
+                format_hint = self._schema_format_to_str(format)
+                data = await XWData.load(source, format_hint=format_hint)
+                schema_dict = data.to_native()
+        else:
+            format_hint = self._schema_format_to_str(format)
+            data = await XWData.load(source, format_hint=format_hint)
+            schema_dict = data.to_native()
         if not isinstance(schema_dict, dict):
             raise XWSchemaParseError(
                 f"Schema file does not contain a valid schema object",
@@ -157,7 +176,7 @@ class XWSchemaEngine(ASchemaEngine):
                     return True
         return False
 
-    async def _resolve_schema_refs(self, schema_dict: dict[str, Any], base_path: Optional[Path] = None) -> dict[str, Any]:
+    async def _resolve_schema_refs(self, schema_dict: dict[str, Any], base_path: Path | None = None) -> dict[str, Any]:
         """Resolve $ref in schema using xwdata's ReferenceResolver (xwdata is required)."""
         try:
             from exonware.xwdata.data.references.resolver import ReferenceResolver
@@ -174,7 +193,16 @@ class XWSchemaEngine(ASchemaEngine):
     # ==========================================================================
 
     async def save_schema(self, schema: dict[str, Any], path: Path, format: SchemaFormat) -> None:
-        """Save schema to file (delegates to XWData.save; xwdata uses xwsystem for I/O)."""
+        """Save schema to file. Uses stdlib JSON for JSON_SCHEMA to avoid xwdata serializer deps; else delegates to XWData.save."""
+        path_obj = Path(path)
+        if format == SchemaFormat.JSON_SCHEMA and not str(path_obj).startswith(("http://", "https://")):
+            try:
+                with open(path_obj, "w", encoding="utf-8") as f:
+                    _json.dump(schema, f, indent=2)
+                logger.debug(f"Saved schema to {path} (format: {format.name})")
+                return
+            except Exception as e:
+                raise XWSchemaError(f"Failed to save JSON schema file: {e}") from e
         data = XWData.from_native(schema)
         await data.save(path, format=self._schema_format_to_str(format))
         logger.debug(f"Saved schema to {path} (format: {format.name})")

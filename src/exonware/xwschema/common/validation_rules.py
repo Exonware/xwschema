@@ -5,11 +5,12 @@ Advanced Validation Rules for XWSchema
 Company: eXonware.com
 Author: eXonware Backend Team
 Email: connect@exonware.com
-Version: 0.4.0.1
+Version: 0.4.0.2
 Generation Date: 15-Nov-2025
 """
 
-from typing import Any, Optional, Callable
+from typing import Any
+from collections.abc import Callable
 from exonware.xwsystem import get_logger
 logger = get_logger(__name__)
 
@@ -18,7 +19,7 @@ class AdvancedValidationRules:
     """Advanced validation rules for schema validation."""
     @staticmethod
 
-    def validate_email(value: Any) -> tuple[bool, Optional[str]]:
+    def validate_email(value: Any) -> tuple[bool, str | None]:
         """
         Validate email address format.
         Args:
@@ -35,7 +36,7 @@ class AdvancedValidationRules:
         return True, None
     @staticmethod
 
-    def validate_url(value: Any) -> tuple[bool, Optional[str]]:
+    def validate_url(value: Any) -> tuple[bool, str | None]:
         """
         Validate URL format.
         Args:
@@ -52,7 +53,7 @@ class AdvancedValidationRules:
         return True, None
     @staticmethod
 
-    def validate_uuid(value: Any) -> tuple[bool, Optional[str]]:
+    def validate_uuid(value: Any) -> tuple[bool, str | None]:
         """
         Validate UUID format.
         Args:
@@ -69,7 +70,7 @@ class AdvancedValidationRules:
         return True, None
     @staticmethod
 
-    def validate_phone(value: Any) -> tuple[bool, Optional[str]]:
+    def validate_phone(value: Any) -> tuple[bool, str | None]:
         """
         Validate phone number format.
         Args:
@@ -87,7 +88,7 @@ class AdvancedValidationRules:
         return True, None
     @staticmethod
 
-    def validate_date(value: Any) -> tuple[bool, Optional[str]]:
+    def validate_date(value: Any) -> tuple[bool, str | None]:
         """
         Validate date format (ISO 8601).
         Args:
@@ -105,7 +106,7 @@ class AdvancedValidationRules:
             return False, f"Invalid date format (expected ISO 8601): {value}"
     @staticmethod
 
-    def validate_regex(value: Any, pattern: str) -> tuple[bool, Optional[str]]:
+    def validate_regex(value: Any, pattern: str) -> tuple[bool, str | None]:
         """
         Validate value against regex pattern.
         Args:
@@ -125,7 +126,7 @@ class AdvancedValidationRules:
             return False, f"Invalid regex pattern: {e}"
     @staticmethod
 
-    def validate_custom(value: Any, validator: Callable[[Any], bool]) -> tuple[bool, Optional[str]]:
+    def validate_custom(value: Any, validator: Callable[[Any], bool]) -> tuple[bool, str | None]:
         """
         Validate value using custom validator function.
         Args:
@@ -152,7 +153,7 @@ VALIDATION_RULES = {
 }
 
 
-def get_validation_rule(rule_name: str) -> Optional[Callable]:
+def get_validation_rule(rule_name: str) -> Callable | None:
     """
     Get validation rule by name.
     Args:

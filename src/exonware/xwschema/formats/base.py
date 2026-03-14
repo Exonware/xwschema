@@ -8,11 +8,11 @@ different schema formats while maintaining semantic meaning.
 Company: eXonware.com
 Author: eXonware Backend Team
 Email: connect@exonware.com
-Version: 0.4.0.1
+Version: 0.4.0.2
 Generation Date: 09-Nov-2025
 """
 
-from typing import Any, Optional
+from typing import Any
 from abc import abstractmethod
 from pathlib import Path
 # Fully reuse xwsystem serialization infrastructure
@@ -494,10 +494,10 @@ class ASchemaSerialization(ASerialization):
         return refs
 
     def resolve_references(
-        self, 
-        schema: dict[str, Any], 
-        base_path: Optional[Path] = None,
-        **opts
+        self,
+        schema: dict[str, Any],
+        base_path: Path | None = None,
+        **opts,
     ) -> dict[str, Any]:
         """
         Resolve all references in schema.
@@ -516,8 +516,8 @@ class ASchemaSerialization(ASerialization):
     def resolve_reference(
         self,
         reference: dict[str, Any],
-        base_path: Optional[Path] = None,
-        **opts
+        base_path: Path | None = None,
+        **opts,
     ) -> Any:
         """
         Resolve a single reference.

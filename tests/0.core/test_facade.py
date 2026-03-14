@@ -346,9 +346,9 @@ class TestXWSchemaFacade:
         assert native['type'] == 'string'
         assert native['title'] == 'Test'
     @pytest.mark.asyncio
-
     async def test_serialize_to_json(self):
-        """Test serialize() to JSON format."""
+        """Test serialize() to JSON format (requires xwsyntax for XWData serializer)."""
+        pytest.importorskip("exonware.xwsyntax")
         schema = XWSchema({'type': 'string'})
         result = await schema.serialize('json')
         assert isinstance(result, str)
@@ -356,9 +356,9 @@ class TestXWSchemaFacade:
         parsed = json.loads(result)
         assert parsed['type'] == 'string'
     @pytest.mark.asyncio
-
     async def test_serialize_to_yaml(self):
-        """Test serialize() to YAML format."""
+        """Test serialize() to YAML format (requires xwsyntax for XWData serializer)."""
+        pytest.importorskip("exonware.xwsyntax")
         schema = XWSchema({'type': 'string'})
         result = await schema.serialize('yaml')
         assert isinstance(result, str)
@@ -367,9 +367,9 @@ class TestXWSchemaFacade:
     # FILE I/O TESTS
     # ========================================================================
     @pytest.mark.asyncio
-
     async def test_save_and_load_json(self):
-        """Test save() and load() with JSON format."""
+        """Test save() and load() with JSON format (requires xwsyntax for save)."""
+        pytest.importorskip("exonware.xwsyntax")
         schema_dict = {'type': 'string', 'title': 'Test'}
         schema = XWSchema(schema_dict)
         with tempfile.NamedTemporaryFile(mode='w', suffix='.json', delete=False) as f:

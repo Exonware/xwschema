@@ -2,7 +2,7 @@
 Company: eXonware.com
 Author: eXonware Backend Team
 Email: connect@exonware.com
-Version: 0.4.0.1
+Version: 0.4.0.2
 Generation Date: September 04, 2025
 Schema Registry Integration for Enterprise Serialization
 Provides integration with enterprise schema registries for:
@@ -15,8 +15,8 @@ for schema string normalization; no stdlib json.
 """
 
 from abc import abstractmethod
-from typing import Any, Optional
 from dataclasses import dataclass
+from typing import Any
 from .base import ASchemaRegistry
 from .errors import SchemaRegistryError, SchemaNotFoundError, SchemaValidationError
 from .defs import CompatibilityLevel
@@ -41,7 +41,7 @@ class SchemaInfo:
     subject: str
     schema: str
     schema_type: str = "AVRO"
-    compatibility: Optional[CompatibilityLevel] = None
+    compatibility: CompatibilityLevel | None = None
 
 
 class ConfluentSchemaRegistry(ASchemaRegistry):
@@ -53,8 +53,8 @@ class ConfluentSchemaRegistry(ASchemaRegistry):
     def __init__(
         self,
         url: str,
-        auth: Optional[tuple] = None,
-        headers: Optional[dict[str, str]] = None,
+        auth: tuple | None = None,
+        headers: dict[str, str] | None = None,
         timeout: float = 30.0,
         cache_size: int = 0,
     ):
@@ -278,8 +278,8 @@ class AwsGlueSchemaRegistry(ASchemaRegistry):
         self,
         registry_name: str,
         region_name: str = 'us-east-1',
-        aws_access_key_id: Optional[str] = None,
-        aws_secret_access_key: Optional[str] = None
+        aws_access_key_id: str | None = None,
+        aws_secret_access_key: str | None = None
     ):
         """
         Initialize AWS Glue Schema Registry client.

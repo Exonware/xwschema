@@ -7,12 +7,12 @@ GUIDELINES_DEV.md standards. All interfaces use 'I' prefix.
 Company: eXonware.com
 Author: eXonware Backend Team
 Email: connect@exonware.com
-Version: 0.4.0.1
+Version: 0.4.0.2
 Generation Date: 09-Nov-2025
 """
 
 from __future__ import annotations
-from typing import Any, Optional, Protocol, runtime_checkable
+from typing import Any, Protocol, runtime_checkable
 from pathlib import Path
 from exonware.xwsystem.shared import IObject
 # ISchema extends IData so schema is a valid IData node (sub-node in XWEntity/XWData).
@@ -54,15 +54,15 @@ class ISchema(IData, IObject, ISchemaProvider, Protocol):
         """Serialize schema to specified format."""
         ...
 
-    async def save(self, path: str | Path, format: Optional[str | SchemaFormat] = None, **opts) -> ISchema:
+    async def save(self, path: str | Path, format: str | SchemaFormat | None = None, **opts) -> ISchema:
         """Save schema to file (returns self for chaining)."""
         ...
 
-    async def load(self, path: str | Path, format: Optional[str | SchemaFormat] = None, **opts) -> ISchema:
+    async def load(self, path: str | Path, format: str | SchemaFormat | None = None, **opts) -> ISchema:
         """Load schema from file (returns self for chaining)."""
         ...
 
-    def get_format(self) -> Optional[str]:
+    def get_format(self) -> str | None:
         """Get schema format information."""
         ...
 
@@ -92,7 +92,7 @@ class ISchemaEngine(Protocol):
         """Convert schema between formats."""
         ...
 
-    async def load_schema(self, path: Path, format: Optional[SchemaFormat] = None) -> dict[str, Any]:
+    async def load_schema(self, path: Path, format: SchemaFormat | None = None) -> dict[str, Any]:
         """Load schema from file."""
         ...
 
@@ -190,7 +190,7 @@ class IConversionPipeline(Protocol):
         schema: dict[str, Any],
         from_format: SchemaFormat,
         to_format: SchemaFormat,
-        intermediate_formats: Optional[list[SchemaFormat]] = None,
+        intermediate_formats: list[SchemaFormat] | None = None,
         **opts
     ) -> dict[str, Any]:
         """

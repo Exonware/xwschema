@@ -18,7 +18,7 @@ This module fully reuses ecosystem libraries:
 Company: eXonware.com
 Author: eXonware Backend Team
 Email: connect@exonware.com
-Version: 0.4.0.1
+Version: 0.4.0.2
 Generation Date: 09-Nov-2025
 """
 
@@ -26,12 +26,13 @@ from __future__ import annotations
 import asyncio
 import inspect
 import threading
-from typing import Any, Optional, Callable
+from typing import Any
+from collections.abc import Callable
 from pathlib import Path
 from collections import OrderedDict
 from datetime import datetime
-# Fully reuse xwsystem for logging
-from exonware.xwsystem import get_logger
+# Fully reuse xwsystem for logging and JSON
+from exonware.xwsystem import get_logger, get_serializer, JsonSerializer
 # xwdata is the base engine for xwschema (required dependency)
 from exonware.xwdata import XWData
 from .base import ASchema
@@ -42,6 +43,7 @@ from .errors import XWSchemaError, XWSchemaValidationError, XWSchemaParseError
 from .builder import XWSchemaBuilder
 from .type_utils import normalize_schema_dict, class_to_string, string_to_class
 logger = get_logger(__name__)
+_json_serializer = get_serializer(JsonSerializer)
 
 
 class XWSchema(ASchema):
@@ -70,8 +72,8 @@ class XWSchema(ASchema):
     def __init__(
         self,
         schema: dict | str | Path | XWSchema | XWData,
-        metadata: Optional[dict] = None,
-        config: Optional[XWSchemaConfig] = None,
+        metadata: dict | None = None,
+        config: XWSchemaConfig | None = None,
         **opts
     ):
         """
@@ -153,65 +155,65 @@ class XWSchema(ASchema):
     def create(
         cls,
         # Basic properties
-        type: Optional[type | str] = None,
-        title: Optional[str] = None,
-        description: Optional[str] = None,
-        format: Optional[str] = None,
-        enum: Optional[list[Any]] = None,
+        type: type | str | None = None,
+        title: str | None = None,
+        description: str | None = None,
+        format: str | None = None,
+        enum: list[Any] | None = None,
         default: Any = None,
         nullable: bool = False,
         deprecated: bool = False,
         confidential: bool = False,
         # Field control
         strict: bool = False,
-        alias: Optional[str] = None,
+        alias: str | None = None,
         exclude: bool = False,
         # String constraints (OpenAPI standard naming)
-        pattern: Optional[str] = None,
-        length_min: Optional[int] = None,
-        length_max: Optional[int] = None,
+        pattern: str | None = None,
+        length_min: int | None = None,
+        length_max: int | None = None,
         strip_whitespace: bool = False,
         to_upper: bool = False,
         to_lower: bool = False,
         # Numeric constraints (OpenAPI standard naming)
-        value_min: Optional[int | float] = None,
-        value_max: Optional[int | float] = None,
+        value_min: int | float | None = None,
+        value_max: int | float | None = None,
         value_min_exclusive: bool | float | int = False,
         value_max_exclusive: bool | float | int = False,
-        value_multiple_of: Optional[int | float] = None,
+        value_multiple_of: int | float | None = None,
         # Array constraints (OpenAPI standard naming)
-        items: Optional[dict[str, Any]] = None,
-        items_min: Optional[int] = None,
-        items_max: Optional[int] = None,
+        items: dict[str, Any] | None = None,
+        items_min: int | None = None,
+        items_max: int | None = None,
         items_unique: bool = False,
         # Object constraints (OpenAPI standard naming)
-        properties: Optional[dict[str, dict[str, Any]]] = None,
-        required: Optional[list[str]] = None,
-        properties_additional: Optional[bool | dict[str, Any]] = None,
-        properties_min: Optional[int] = None,
-        properties_max: Optional[int] = None,
+        properties: dict[str, dict[str, Any]] | None = None,
+        required: list[str] | None = None,
+        properties_additional: bool | dict[str, Any] | None = None,
+        properties_min: int | None = None,
+        properties_max: int | None = None,
         # Logical constraints (OpenAPI standard naming)
-        schema_all_of: Optional[list[dict[str, Any]]] = None,
-        schema_any_of: Optional[list[dict[str, Any]]] = None,
-        schema_one_of: Optional[list[dict[str, Any]]] = None,
-        schema_not: Optional[dict[str, Any]] = None,
+        schema_all_of: list[dict[str, Any]] | None = None,
+        schema_any_of: list[dict[str, Any]] | None = None,
+        schema_one_of: list[dict[str, Any]] | None = None,
+        schema_not: dict[str, Any] | None = None,
         # Conditional constraints (OpenAPI standard naming)
-        schema_if: Optional[dict[str, Any]] = None,
-        schema_then: Optional[dict[str, Any]] = None,
-        schema_else: Optional[dict[str, Any]] = None,
+        schema_if: dict[str, Any] | None = None,
+        schema_then: dict[str, Any] | None = None,
+        schema_else: dict[str, Any] | None = None,
         # Content constraints
-        content_encoding: Optional[str] = None,
-        content_media_type: Optional[str] = None,
-        content_schema: Optional[dict[str, Any]] = None,
+        content_encoding: str | None = None,
+        content_media_type: str | None = None,
+        content_schema: dict[str, Any] | None = None,
         # Metadata
         example: Any = None,
-        examples: Optional[dict[str, Any]] = None,
+        examples: dict[str, Any] | None = None,
         # References
-        ref: Optional[str] = None,
-        anchor: Optional[str] = None,
+        ref: str | None = None,
+        anchor: str | None = None,
         # Configuration
-        config: Optional[XWSchemaConfig] = None,
-        metadata: Optional[dict] = None,
+        config: XWSchemaConfig | None = None,
+        metadata: dict | None = None,
     ) -> XWSchema:
         """
         Create XWSchema with all properties from old MIGRAT implementation.
@@ -295,7 +297,7 @@ class XWSchema(ASchema):
         return cls(schema_dict, metadata=metadata, config=config)
     @classmethod
 
-    async def load(cls, path: str | Path, format: Optional[SchemaFormat | str] = None, config: Optional[XWSchemaConfig] = None) -> XWSchema:
+    async def load(cls, path: str | Path, format: SchemaFormat | str | None = None, config: XWSchemaConfig | None = None) -> XWSchema:
         """
         Load schema from file or URL.
         Args:
@@ -316,7 +318,7 @@ class XWSchema(ASchema):
         return cls(schema_dict, config=config)
     @classmethod
 
-    async def from_data(cls, data: Any, mode: SchemaGenerationMode = SchemaGenerationMode.INFER, config: Optional[XWSchemaConfig] = None) -> XWSchema:
+    async def from_data(cls, data: Any, mode: SchemaGenerationMode = SchemaGenerationMode.INFER, config: XWSchemaConfig | None = None) -> XWSchema:
         """
         Generate schema from data.
         Args:
@@ -334,7 +336,7 @@ class XWSchema(ASchema):
         return cls(schema_dict, config=config)
     @classmethod
 
-    def from_native(cls, schema_dict: dict[str, Any], config: Optional[XWSchemaConfig] = None) -> XWSchema:
+    def from_native(cls, schema_dict: dict[str, Any], config: XWSchemaConfig | None = None) -> XWSchema:
         """
         Create schema from native Python dict.
         Args:
@@ -346,7 +348,7 @@ class XWSchema(ASchema):
         return cls(schema_dict, config=config)
     @classmethod
 
-    def from_string(cls, s: str, config: Optional[XWSchemaConfig] = None) -> XWSchema:
+    def from_string(cls, s: str, config: XWSchemaConfig | None = None) -> XWSchema:
         """
         Create schema from JSON string (reuses XWObject.from_string pattern).
         Uses xwsystem JsonSerializer; constructs XWSchema(schema_dict).
@@ -549,10 +551,20 @@ class XWSchema(ASchema):
         return self._schema_data.to_native() if self._schema_data else self._schema_dict
 
     async def serialize(self, format: str | SchemaFormat, **opts) -> str | bytes:
-        """Serialize schema (delegates to XWData.serialize; xwdata uses xwsystem for I/O)."""
-        return await self._schema_data.serialize(format=self._schema_format_str(format), **opts)
+        """Serialize schema. Uses xwsystem JsonSerializer for 'json'; else delegates to XWData.serialize."""
+        fmt_str = self._schema_format_str(format)
+        if fmt_str in ("json", "json-schema"):
+            native = self.to_native()
+            indent = opts.get("indent", 2)
+            sort_keys = opts.get("sort_keys", False)
+            result = _json_serializer.encode(
+                native,
+                options={"indent": indent, "sort_keys": sort_keys}
+            )
+            return result.decode("utf-8") if isinstance(result, bytes) else result
+        return await self._schema_data.serialize(format=fmt_str, **opts)
 
-    def _schema_format_str(self, format: str | SchemaFormat) -> Optional[str]:
+    def _schema_format_str(self, format: str | SchemaFormat) -> str | None:
         """Map SchemaFormat to xwdata format string."""
         if not format:
             return None
@@ -564,17 +576,17 @@ class XWSchema(ASchema):
         """Serialize schema to format (delegates to XWData.to_format())."""
         return self._schema_data.to_format(format=self._schema_format_str(format), **opts)
 
-    def to_file(self, path: str | Path, format: Optional[str | SchemaFormat] = None, **opts) -> XWSchema:
+    def to_file(self, path: str | Path, format: str | SchemaFormat | None = None, **opts) -> XWSchema:
         """Save schema to file (delegates to XWData.to_file())."""
         self._schema_data.to_file(path, format=self._schema_format_str(format), **opts)
         return self
 
-    async def save(self, path: str | Path, format: Optional[str | SchemaFormat] = None, **opts) -> XWSchema:
+    async def save(self, path: str | Path, format: str | SchemaFormat | None = None, **opts) -> XWSchema:
         """Save schema to file (delegates to XWData.save; xwdata uses xwsystem for I/O)."""
         await self._schema_data.save(path, format=self._schema_format_str(format), **opts)
         return self
 
-    async def reload(self, path: str | Path, format: Optional[str | SchemaFormat] = None, **opts) -> XWSchema:
+    async def reload(self, path: str | Path, format: str | SchemaFormat | None = None, **opts) -> XWSchema:
         """Reload schema from file (engine uses XWData.load)."""
         format_enum = format
         if isinstance(format, str) and format:

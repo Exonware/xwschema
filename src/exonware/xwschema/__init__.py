@@ -3,7 +3,7 @@ xwschema: Schema validation and data structure definition library
 Company: eXonware.com
 Author: eXonware Backend Team
 Email: connect@exonware.com
-Version: 0.4.0.1
+Version: 0.4.0.2
 Generation Date: 09-Nov-2025
 """
 # xwdata, xwsystem, xwquery are required; no fallbacks

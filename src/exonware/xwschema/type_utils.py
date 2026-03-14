@@ -6,16 +6,16 @@ Provides bidirectional conversion between class types and string representations
 Company: eXonware.com
 Author: eXonware Backend Team
 Email: connect@exonware.com
-Version: 0.4.0.1
+Version: 0.4.0.2
 Generation Date: 30-Dec-2025
 """
 
-from typing import Any, Optional, Type
+from typing import Any
 import importlib
 import inspect
 
 
-def class_to_string(cls: Type) -> str:
+def class_to_string(cls: type) -> str:
     """
     Convert a class to its string representation.
     Format: "module.path.ClassName"
@@ -40,7 +40,7 @@ def class_to_string(cls: Type) -> str:
     return f"{module}.{name}"
 
 
-def string_to_class(class_string: str) -> Optional[Type]:
+def string_to_class(class_string: str) -> type | None:
     """
     Convert a string representation to a class.
     Supports:

@@ -7,11 +7,11 @@ Supports all OpenAPI/JSON Schema properties.
 Company: eXonware.com
 Author: eXonware Backend Team
 Email: connect@exonware.com
-Version: 0.4.0.1
+Version: 0.4.0.2
 Generation Date: 09-Nov-2025
 """
 
-from typing import Any, Optional, Type
+from typing import Any
 import inspect
 from datetime import datetime
 # Fully reuse xwsystem for logging
@@ -42,62 +42,63 @@ class XWSchemaBuilder:
 
     def build_schema_dict(
         # Basic properties
-        type: Optional[type | str] = None,
-        title: Optional[str] = None,
-        description: Optional[str] = None,
-        format: Optional[str] = None,
-        enum: Optional[list[Any]] = None,
+        type: type | str | None = None,
+        title: str | None = None,
+        description: str | None = None,
+        format: str | None = None,
+        enum: list[Any] | None = None,
         default: Any = None,
         nullable: bool = False,
         deprecated: bool = False,
         confidential: bool = False,
         # Field control
         strict: bool = False,
-        alias: Optional[str] = None,
+        alias: str | None = None,
         exclude: bool = False,
         # String constraints (OpenAPI standard naming)
-        pattern: Optional[str] = None,
-        length_min: Optional[int] = None,
-        length_max: Optional[int] = None,
+        pattern: str | None = None,
+        length_min: int | None = None,
+        length_max: int | None = None,
         strip_whitespace: bool = False,
         to_upper: bool = False,
         to_lower: bool = False,
         # Numeric constraints (OpenAPI standard naming)
-        value_min: Optional[int | float] = None,
-        value_max: Optional[int | float] = None,
+        value_min: int | float | None = None,
+        value_max: int | float | None = None,
         value_min_exclusive: bool | float | int = False,
         value_max_exclusive: bool | float | int = False,
-        value_multiple_of: Optional[int | float] = None,
+        value_multiple_of: int | float | None = None,
         # Array constraints (OpenAPI standard naming)
-        items: Optional[dict[str, Any]] = None,
-        items_min: Optional[int] = None,
-        items_max: Optional[int] = None,
+        items: dict[str, Any] | None = None,
+        items_min: int | None = None,
+        items_max: int | None = None,
         items_unique: bool = False,
         # Object constraints (OpenAPI standard naming)
-        properties: Optional[dict[str, dict[str, Any]]] = None,
-        required: Optional[list[str]] = None,
-        properties_additional: Optional[bool | dict[str, Any]] = None,
-        properties_min: Optional[int] = None,
-        properties_max: Optional[int] = None,
+        properties: dict[str, dict[str, Any]] | None = None,
+        required: list[str] | None = None,
+        properties_additional: bool | dict[str, Any] | None = None,
+        properties_min: int | None = None,
+        properties_max: int | None = None,
         # Logical constraints (OpenAPI standard naming)
-        schema_all_of: Optional[list[dict[str, Any]]] = None,
-        schema_any_of: Optional[list[dict[str, Any]]] = None,
-        schema_one_of: Optional[list[dict[str, Any]]] = None,
-        schema_not: Optional[dict[str, Any]] = None,
+        schema_all_of: list[dict[str, Any]] | None = None,
+        schema_any_of: list[dict[str, Any]] | None = None,
+        schema_one_of: list[dict[str, Any]] | None = None,
+        schema_not: dict[str, Any] | None = None,
         # Conditional constraints (OpenAPI standard naming)
-        schema_if: Optional[dict[str, Any]] = None,
-        schema_then: Optional[dict[str, Any]] = None,
-        schema_else: Optional[dict[str, Any]] = None,
+        schema_if: dict[str, Any] | None = None,
+        schema_then: dict[str, Any] | None = None,
+        schema_else: dict[str, Any] | None = None,
         # Content constraints
-        content_encoding: Optional[str] = None,
-        content_media_type: Optional[str] = None,
-        content_schema: Optional[dict[str, Any]] = None,
+        content_encoding: str | None = None,
+        content_media_type: str | None = None,
+        content_schema: dict[str, Any] | None = None,
         # Metadata
         example: Any = None,
-        examples: Optional[dict[str, Any]] = None,
+        examples: dict[str, Any] | None = None,
         # References
-        ref: Optional[str] = None,
-        anchor: Optional[str] = None,
+        ref: str | None = None,
+        anchor: str | None = None,
+        **kwargs: Any,
     ) -> dict[str, Any]:
         """
         Build a JSON Schema dict from all properties.
@@ -244,6 +245,7 @@ class XWSchemaBuilder:
             schema_dict['$ref'] = ref
         if anchor:
             schema_dict['$anchor'] = anchor
-        # Custom properties from kwargs
-        schema_dict.update(kwargs)
+        # Custom properties from extra keyword arguments
+        if kwargs:
+            schema_dict.update(kwargs)
         return schema_dict

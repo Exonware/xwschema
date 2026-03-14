@@ -7,12 +7,12 @@ Following GUIDELINES_DEV.md: All abstract classes start with 'A' and extend 'I' 
 Company: eXonware.com
 Author: eXonware Backend Team
 Email: connect@exonware.com
-Version: 0.4.0.1
+Version: 0.4.0.2
 Generation Date: 09-Nov-2025
 """
 
 from abc import ABC, abstractmethod
-from typing import Any, Optional
+from typing import Any
 from pathlib import Path
 from datetime import datetime
 # Fully reuse xwsystem for logging
@@ -38,17 +38,17 @@ class ASchema(XWObject, ISchema):
     Extends XWObject and ISchema interface.
     """
 
-    def __init__(self, config: Optional[XWSchemaConfig] = None, object_id: Optional[str] = None):
+    def __init__(self, config: XWSchemaConfig | None = None, object_id: str | None = None):
         """Initialize abstract schema."""
         super().__init__(object_id=object_id)
         now = datetime.now()
         self._created_at = now
         self._updated_at = now
         self._config = config or XWSchemaConfig.default()
-        self._engine: Optional[ISchemaEngine] = None
+        self._engine: ISchemaEngine | None = None
         self._metadata: dict[str, Any] = {}
-        self._format: Optional[SchemaFormat] = None
-        self._data: Optional[XWData] = None
+        self._format: SchemaFormat | None = None
+        self._data: XWData | None = None
         logger.debug("ASchema initialized")
     @property
 
@@ -67,7 +67,7 @@ class ASchema(XWObject, ISchema):
             return self._data.get_metadata()
         return self._metadata
 
-    def get_format(self) -> Optional[str]:
+    def get_format(self) -> str | None:
         """Get schema format information (delegate to _data when set)."""
         if self._data is not None:
             return self._data.get_format()
@@ -105,7 +105,7 @@ class ASchema(XWObject, ISchema):
             return await self._data.serialize(format, **opts)
         raise RuntimeError("ASchema.serialize requires _data (XWData) to be set")
 
-    async def save(self, path: str | Path, format: Optional[str] = None, **opts) -> ISchema:
+    async def save(self, path: str | Path, format: str | None = None, **opts) -> ISchema:
         if self._data is not None:
             await self._data.save(path, format=format, **opts)
         return self
@@ -126,7 +126,7 @@ class ASchema(XWObject, ISchema):
             return self._data.to_format(format, **opts)
         raise RuntimeError("ASchema.to_format requires _data (XWData) to be set")
 
-    def to_file(self, path: str | Path, format: Optional[str] = None, **opts) -> ISchema:
+    def to_file(self, path: str | Path, format: str | None = None, **opts) -> ISchema:
         """Synchronously save to file (delegate to _data)."""
         if self._data is not None:
             self._data.to_file(path, format=format, **opts)
@@ -202,7 +202,7 @@ class ASchemaEngine(ISchemaEngine):
     Extends ISchemaEngine interface.
     """
 
-    def __init__(self, config: Optional[XWSchemaConfig] = None):
+    def __init__(self, config: XWSchemaConfig | None = None):
         """Initialize abstract schema engine."""
         self._config = config or XWSchemaConfig.default()
         logger.debug("ASchemaEngine initialized")

@@ -6,11 +6,11 @@ Extends xwsystem.io.serialization for GraphQL schema definition language support
 Company: eXonware.com
 Author: eXonware Backend Team
 Email: connect@exonware.com
-Version: 0.4.0.1
+Version: 0.4.0.2
 Generation Date: 09-Nov-2025
 """
 
-from typing import Any, Optional
+from typing import Any
 from exonware.xwsystem.io.serialization.contracts import EncodeOptions, DecodeOptions
 from exonware.xwsystem.io.defs import CodecCapability
 from exonware.xwsystem.io.serialization.errors import SerializationError
@@ -125,7 +125,7 @@ class GraphQLSchemaSerializer(ASchemaSerialization):
     # CORE SERIALIZATION (Text-based SDL)
     # ========================================================================
 
-    def encode(self, value: Any, *, options: Optional[EncodeOptions] = None) -> bytes | str:
+    def encode(self, value: Any, *, options: EncodeOptions | None = None) -> bytes | str:
         """
         Encode GraphQL schema to string.
         GraphQL uses SDL (Schema Definition Language) text format.
@@ -142,7 +142,7 @@ class GraphQLSchemaSerializer(ASchemaSerialization):
         else:
             raise SerializationError(f"Cannot encode {type(value).__name__} as GraphQL schema")
 
-    def decode(self, repr: bytes | str, *, options: Optional[DecodeOptions] = None) -> Any:
+    def decode(self, repr: bytes | str, *, options: DecodeOptions | None = None) -> Any:
         """
         Decode GraphQL schema from string.
         Parses GraphQL SDL into structured format (basic implementation).
@@ -185,8 +185,8 @@ class GraphQLSchemaSerializer(ASchemaSerialization):
         # Basic parsing: extract type definitions
         # This is a simplified parser - full parser would use graphql-core library
         lines = sdl.split('\n')
-        current_type: Optional[str] = None
-        current_kind: Optional[str] = None
+        current_type: str | None = None
+        current_kind: str | None = None
         in_block = False
         for line in lines:
             line = line.strip()

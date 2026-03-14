@@ -7,11 +7,11 @@ Used by the engine; not part of public API.
 Company: eXonware.com
 Author: eXonware Backend Team
 Email: connect@exonware.com
-Version: 0.4.0.1
+Version: 0.4.0.2
 Generation Date: 09-Nov-2025
 """
 
-from typing import Any, Optional
+from typing import Any
 from collections import Counter
 # Fully reuse xwsystem for logging
 from exonware.xwsystem import get_logger
@@ -30,7 +30,7 @@ class DefaultGenerationStrategy(ISchemaGenerator):
     Used by XWSchemaEngine; not public. Reuses XWData for structure analysis.
     """
 
-    def __init__(self, config: Optional[GenerationConfig] = None):
+    def __init__(self, config: GenerationConfig | None = None):
         """Initialize generator."""
         self._config = config or GenerationConfig()
         logger.debug(f"DefaultGenerationStrategy initialized (mode: {config.mode if config else 'default'})")

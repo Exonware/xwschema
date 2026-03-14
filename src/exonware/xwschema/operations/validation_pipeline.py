@@ -6,13 +6,14 @@ Provides multi-stage validation pipelines for complex validation workflows.
 Company: eXonware.com
 Author: eXonware Backend Team
 Email: connect@exonware.com
-Version: 0.4.0.1
+Version: 0.4.0.2
 Generation Date: 26-Jan-2026
 NOTE: This is an OPTIONAL module for BaaS platform integration.
 """
 
 from __future__ import annotations
-from typing import Any, Optional, Callable
+from typing import Any
+from collections.abc import Callable
 from dataclasses import dataclass, field
 from exonware.xwsystem import get_logger
 from exonware.xwsystem.validation.contracts import ISchemaProvider
@@ -28,7 +29,7 @@ class ValidationResult:
     is_valid: bool
     errors: list[str] = field(default_factory=list)
     warnings: list[str] = field(default_factory=list)
-    stage_name: Optional[str] = None
+    stage_name: str | None = None
     metadata: dict[str, Any] = field(default_factory=dict)
 @dataclass
 
@@ -46,7 +47,7 @@ class PipelineStage:
     validator: Callable | ISchemaProvider
     mode: ValidationMode = ValidationMode.STRICT
     required: bool = True
-    description: Optional[str] = None
+    description: str | None = None
     metadata: dict[str, Any] = field(default_factory=dict)
 
 
@@ -57,7 +58,7 @@ class ValidationPipeline:
     This is an optional BaaS feature.
     """
 
-    def __init__(self, name: Optional[str] = None):
+    def __init__(self, name: str | None = None):
         """
         Initialize validation pipeline.
         Args:
@@ -66,7 +67,7 @@ class ValidationPipeline:
         self._name = name or "ValidationPipeline"
         self._stages: list[PipelineStage] = []
         self._engine = XWSchemaEngine()
-        self._default_provider: Optional[ISchemaProvider] = None
+        self._default_provider: ISchemaProvider | None = None
 
     def add_stage(
         self,
@@ -74,7 +75,7 @@ class ValidationPipeline:
         validator: Callable | ISchemaProvider,
         mode: ValidationMode = ValidationMode.STRICT,
         required: bool = True,
-        description: Optional[str] = None,
+        description: str | None = None,
         **metadata
     ) -> ValidationPipeline:
         """

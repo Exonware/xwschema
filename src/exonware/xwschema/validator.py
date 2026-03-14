@@ -8,12 +8,12 @@ Entry point get_schema_validator() returns XWSchema({}).
 Company: eXonware.com
 Author: eXonware Backend Team
 Email: connect@exonware.com
-Version: 0.4.0.1
+Version: 0.4.0.2
 Generation Date: 09-Nov-2025
 """
 
 import re
-from typing import Any, Optional
+from typing import Any
 from dataclasses import dataclass
 from exonware.xwsystem import get_logger
 from exonware.xwsystem.validation.contracts import ISchemaProvider
@@ -507,7 +507,7 @@ class DefaultValidationStrategy(ISchemaProvider):
 # ---------------------------------------------------------------------------
 
 
-def get_schema_validator(*, mode: Optional[str] = None) -> ISchemaProvider:
+def get_schema_validator(*, mode: str | None = None) -> ISchemaProvider:
     """
     Factory for xwsystem entry point xwsystem.schema_validators.
     Returns the concrete ISchemaProvider implementation (XWSchema).

@@ -7,11 +7,11 @@ Avro DATA serialization uses XWAvroSerializer from xwformats (binary format).
 Company: eXonware.com
 Author: eXonware Backend Team
 Email: connect@exonware.com
-Version: 0.4.0.1
+Version: 0.4.0.2
 Generation Date: 09-Nov-2025
 """
 
-from typing import Any, Optional
+from typing import Any
 from exonware.xwsystem.io.serialization.formats.text.json import JsonSerializer
 from exonware.xwsystem.io.serialization.contracts import EncodeOptions, DecodeOptions
 from exonware.xwsystem.io.defs import CodecCapability
@@ -126,7 +126,7 @@ class AvroSchemaSerializer(ASchemaSerialization):
     # CORE SERIALIZATION (Delegate to JsonSerializer)
     # ========================================================================
 
-    def encode(self, value: Any, *, options: Optional[EncodeOptions] = None) -> bytes | str:
+    def encode(self, value: Any, *, options: EncodeOptions | None = None) -> bytes | str:
         """
         Encode Avro schema - fully delegates to xwsystem's JsonSerializer.
         No manual JSON encoding - all serialization delegated to xwsystem.
@@ -137,7 +137,7 @@ class AvroSchemaSerializer(ASchemaSerialization):
             raise SerializationError(f"Invalid Avro primitive type: {value}")
         return self._json_serializer.encode(value, options=options)
 
-    def decode(self, repr: bytes | str, *, options: Optional[DecodeOptions] = None) -> Any:
+    def decode(self, repr: bytes | str, *, options: DecodeOptions | None = None) -> Any:
         """
         Decode Avro schema - fully delegates to xwsystem's JsonSerializer.
         No manual JSON decoding - all deserialization delegated to xwsystem.

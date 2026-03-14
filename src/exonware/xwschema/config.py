@@ -7,13 +7,13 @@ and sensible defaults for different use cases.
 Company: eXonware.com
 Author: eXonware Backend Team
 Email: connect@exonware.com
-Version: 0.4.0.1
+Version: 0.4.0.2
 Generation Date: 09-Nov-2025
 """
 
 from __future__ import annotations
 from dataclasses import dataclass, field, replace
-from typing import Optional, Any
+from typing import Any
 from pathlib import Path
 import copy
 from .defs import SchemaFormat, ValidationMode, SchemaGenerationMode
@@ -154,7 +154,7 @@ class XWSchemaConfig:
     timeout_seconds: int = DEFAULT_TIMEOUT_SECONDS
     # Schema reference resolution (xwdata ReferenceResolver)
     enable_reference_resolution: bool = False
-    reference_base_path: Optional[Path] = None
+    reference_base_path: Path | None = None
     @classmethod
 
     def default(cls) -> XWSchemaConfig:

@@ -66,9 +66,9 @@ class TestXWSchemaEngine:
     # SCHEMA LOADING TESTS
     # ========================================================================
     @pytest.mark.asyncio
-
     async def test_load_schema_from_json_file(self, engine, sample_schema_dict):
-        """Test loading schema from JSON file."""
+        """Test loading schema from JSON file (requires xwjson when engine uses XWData.load)."""
+        pytest.importorskip("exonware.xwjson")
         with tempfile.NamedTemporaryFile(mode='w', suffix='.json', delete=False) as f:
             json.dump(sample_schema_dict, f)
             temp_path = Path(f.name)
@@ -80,9 +80,9 @@ class TestXWSchemaEngine:
             if temp_path.exists():
                 temp_path.unlink()
     @pytest.mark.asyncio
-
     async def test_load_schema_with_format_hint(self, engine, sample_schema_dict):
-        """Test loading schema with format hint."""
+        """Test loading schema with format hint (requires xwjson when engine uses XWData.load)."""
+        pytest.importorskip("exonware.xwjson")
         with tempfile.NamedTemporaryFile(mode='w', suffix='.json', delete=False) as f:
             json.dump(sample_schema_dict, f)
             temp_path = Path(f.name)
@@ -102,9 +102,9 @@ class TestXWSchemaEngine:
     # SCHEMA SAVING TESTS
     # ========================================================================
     @pytest.mark.asyncio
-
     async def test_save_schema_to_json_file(self, engine, sample_schema_dict):
-        """Test saving schema to JSON file."""
+        """Test saving schema to JSON file (requires xwsyntax for XWData.save)."""
+        pytest.importorskip("exonware.xwsyntax")
         with tempfile.NamedTemporaryFile(mode='w', suffix='.json', delete=False) as f:
             temp_path = Path(f.name)
         try:
@@ -118,9 +118,9 @@ class TestXWSchemaEngine:
             if temp_path.exists():
                 temp_path.unlink()
     @pytest.mark.asyncio
-
     async def test_save_schema_with_format(self, engine, sample_schema_dict):
-        """Test saving schema with specific format."""
+        """Test saving schema with specific format (requires xwsyntax for XWData.save)."""
+        pytest.importorskip("exonware.xwsyntax")
         with tempfile.NamedTemporaryFile(mode='w', suffix='.json', delete=False) as f:
             temp_path = Path(f.name)
         try:

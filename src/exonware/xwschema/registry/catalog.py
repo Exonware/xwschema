@@ -12,7 +12,7 @@ Email: connect@exonware.com
 
 from __future__ import annotations
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any
 from dataclasses import dataclass, field
 from exonware.xwsystem import get_logger, get_serializer, JsonSerializer
 logger = get_logger(__name__)
@@ -36,8 +36,8 @@ class SchemaCatalogEntry:
     definition: dict[str, Any]
     version: int = 1
     schema_type: str = "JSON"
-    created_at: Optional[str] = None
-    updated_at: Optional[str] = None
+    created_at: str | None = None
+    updated_at: str | None = None
     metadata: dict[str, Any] = field(default_factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
@@ -149,12 +149,12 @@ class SchemaCatalog:
         self._save()
         logger.debug("Dropped schema %s", name)
 
-    def get_schema(self, name: str) -> Optional[SchemaCatalogEntry]:
+    def get_schema(self, name: str) -> SchemaCatalogEntry | None:
         """Get schema by name."""
         self._load()
         return self._cache.get(name)
 
-    def get_schema_version(self, name: str) -> Optional[int]:
+    def get_schema_version(self, name: str) -> int | None:
         """Return current version of schema, or None if not found."""
         entry = self.get_schema(name)
         return entry.version if entry else None

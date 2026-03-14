@@ -7,11 +7,11 @@ providing rich error context and actionable error messages.
 Company: eXonware.com
 Author: eXonware Backend Team
 Email: connect@exonware.com
-Version: 0.4.0.1
+Version: 0.4.0.2
 Generation Date: 09-Nov-2025
 """
 
-from typing import Any, Optional
+from typing import Any
 # ==============================================================================
 # BASE ERROR
 # ==============================================================================
@@ -27,11 +27,11 @@ class XWSchemaError(Exception):
         self,
         message: str,
         *,
-        operation: Optional[str] = None,
-        path: Optional[str] = None,
-        format: Optional[str] = None,
-        context: Optional[dict[str, Any]] = None,
-        suggestion: Optional[str] = None
+        operation: str | None = None,
+        path: str | None = None,
+        format: str | None = None,
+        context: dict[str, Any] | None = None,
+        suggestion: str | None = None,
     ):
         """
         Initialize xwschema error with rich context.
@@ -72,7 +72,7 @@ class XWSchemaError(Exception):
 class XWSchemaValidationError(XWSchemaError):
     """Raised when data fails schema validation."""
 
-    def __init__(self, message: str, field: Optional[str] = None, **kwargs):
+    def __init__(self, message: str, field: str | None = None, **kwargs):
         if 'suggestion' not in kwargs:
             kwargs['suggestion'] = "Check the data structure against the schema definition"
         if field:
