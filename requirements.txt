@@ -6,7 +6,7 @@
 # Generation Date: February 2, 2025
 #
 # This file contains all dependencies needed for {xwschema}
-# Compatible with Python 3.8+ for maximum compatibility
+# Requires Python 3.12+
 #
 # Usage:
 #   pip install -r requirements.txt
@@ -17,7 +17,7 @@
 # =============================================================================
 # CORE DEPENDENCIES
 # =============================================================================
-# Source size (src/*): ~351.6 KB
+# Source size (src/*): ~351.7 KB
 pip                     # Package installer (CI and lazy install)
 exonware-xwsystem           # Foundation library
 exonware-xwdata             # Schema load/save and conversion (no direct xwjson)
@@ -56,9 +56,8 @@ mypy>=0.950                          # Static type checking
 # =============================================================================
 #
 # Python Version Compatibility:
-# - Minimum: Python 3.8 (for maximum compatibility)
-# - Recommended: Python 3.8+ for best compatibility
-# - Tested: Python 3.8, 3.9, 3.10, 3.11, 3.12
+# - Minimum: Python 3.12
+# - Tested: Python 3.12+
 #
 # Platform Compatibility:
 # - Windows: Full support

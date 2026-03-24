@@ -1,5 +1,5 @@
 
-# Source size (src/*): ~351.6 KB
+# Source size (src/*): ~351.7 KB
 [build-system]
   requires = ["hatchling"]
   build-backend = "hatchling.build"
@@ -12,53 +12,24 @@
   requires-python = ">=3.12"
   keywords = ["schema", "validation", "structure", "definition", "data-types", "exonware"]
   classifiers = []
-  dependencies = []
-  exonware-xwdata = "514480 ; 0.49 MB"
-  authors = []
-  "{ name" = "eXonware Backend Team"
+  dependencies = ["exonware-xwsystem", "exonware-xwdata"]
+  authors = [{ name = "eXonware Backend Team", email = "connect@exonware.com" }]
 
   [project.license]
     text = "MIT"
 
   [project.optional-dependencies]
-    dev = []
-    "black>" = "23.0.0\",  # file-size=3914855 ; 3.73 MB"
-    "exonware-xwdata[dev]" = "197551718 ; 188.40 MB"
-    exonware-xwlazy = "349706 ; 0.33 MB"
-    "isort>" = "5.12.0\",  # file-size=568232 ; 0.54 MB"
-    "mypy>" = "1.0.0\",  # file-size=29775254 ; 28.40 MB"
-    "pytest>" = "7.0.0\",  # file-size=3152415 ; 3.01 MB"
-    "pytest-asyncio>" = "0.21.0\",  # file-size=46752 ; 0.04 MB"
-    "pytest-cov>" = "4.0.0\",  # file-size=71639 ; 0.07 MB"
-    lazy = []
-    "exonware-xwdata[lazy]" = "9909043 ; 9.45 MB"
-    full = ["brotlicffi", "chardet", "simplejson", "socks", "awscrt", "numpy", "scikit-learn", "cython", "lz4", "uarray", "pandas", "pytz", "pyarrow", "cloudpickle", "numexpr", "bottleneck", "regex", "atomicwrites", "interegular"]
-    aiofiles = "81991 ; 0.08 MB"
-    attrs = "440438 ; 0.42 MB"
-    bcrypt = "329770 ; 0.31 MB"
-    brotli = "868889 ; 0.83 MB"
-    cachebox = "971831 ; 0.93 MB"
-    cachetools = "105183 ; 0.10 MB"
-    cbor2 = "406858 ; 0.39 MB"
-    cryptography = "10265860 ; 9.79 MB"
-    dicttoxml = "96721 ; 0.09 MB"
-    "exonware-xwdata[full]" = "628264796 ; 599.16 MB"
-    httpx = "765633 ; 0.73 MB"
-    hyperlight_hyperjson = "261754 ; 0.25 MB"
-    json5 = "377396 ; 0.36 MB"
-    msgpack = "238387 ; 0.23 MB"
-    msgspec = "525449 ; 0.50 MB"
-    opentelemetry-api = "423339 ; 0.40 MB"
-    orjson = "289443 ; 0.28 MB"
-    psutil = "2104166 ; 2.01 MB"
-    pylru = "74244 ; 0.07 MB"
-    pymongo = "6208897 ; 5.92 MB"
-    PyYAML = "730195 ; 0.70 MB"
-    rich = "2130726 ; 2.03 MB"
-    tomli = "288072 ; 0.27 MB"
-    tomli-w = "25350 ; 0.02 MB"
-    xmltodict = "65213 ; 0.06 MB"
-    zstandard = "1384115 ; 1.32 MB"
+    dev = [
+      "black>=23.0.0",
+      "isort>=5.12.0",
+      "mypy>=1.0.0",
+      "pytest>=7.0.0",
+      "pytest-asyncio>=0.21.0",
+      "pytest-cov>=4.0.0",
+      "exonware-xwdata[dev]",
+    ]
+    lazy = ["exonware-xwlazy", "exonware-xwdata[lazy]"]
+    full = ["exonware-xwdata[full]", "brotlicffi", "chardet", "simplejson", "socks", "awscrt", "numpy", "scikit-learn", "cython", "lz4", "uarray", "pandas", "pytz", "pyarrow", "cloudpickle", "numexpr", "bottleneck", "regex", "atomicwrites", "interegular"]
 
   [project.urls]
     Homepage = "https://exonware.com"
@@ -66,25 +37,21 @@
     Documentation = "https://github.com/exonware/xwschema#readme"
     Subtree = "https://github.com/exonware/xwschema.git"
 
-  [project.entry-points]
-
-    [project.entry-points.xwsystem]
-
-      [project.entry-points.xwsystem.schema_validators]
-        xwschema = "exonware.xwschema.validator:get_schema_validator"
+  [project.entry-points."xwsystem.schema_validators"]
+    xwschema = "exonware.xwschema.validator:get_schema_validator"
 
 [tool]
 
   [tool.black]
     line-length = 88
-    target-version = ["py38"]
+    target-version = ["py312"]
 
   [tool.isort]
     profile = "black"
     line_length = 88
 
   [tool.mypy]
-    python_version = "0.4.0.2"
+    python_version = "3.12"
     mypy_path = "src"
     strict = true
     warn_return_any = true
@@ -125,4 +92,4 @@
           py-modules = ["src/xwschema"]
 
         [tool.hatch.build.targets.sdist]
-          include = []
+          include = ["/src", "/tests", "/README.md", "/.github"]

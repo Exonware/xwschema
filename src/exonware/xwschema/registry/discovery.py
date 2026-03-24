@@ -6,7 +6,7 @@ Auto-discovers schemas from multiple sources.
 Company: eXonware.com
 Author: eXonware Backend Team
 Email: connect@exonware.com
-Version: 0.4.0.2
+Version: 0.4.0.3
 Generation Date: 26-Jan-2026
 NOTE: This is an OPTIONAL module for BaaS platform integration.
 """

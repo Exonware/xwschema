@@ -6,7 +6,7 @@ This allows users to import the library in two ways:
 Company: eXonware.com
 Author: eXonware Backend Team
 Email: connect@exonware.com
-Version: 0.4.0.2
+Version: 0.4.0.3
 Generation Date: February 2, 2025
 """
 # Import everything from the main package

@@ -361,8 +361,9 @@ class TestXWSchemaFacade:
         pytest.importorskip("exonware.xwsyntax")
         schema = XWSchema({'type': 'string'})
         result = await schema.serialize('yaml')
-        assert isinstance(result, str)
-        assert 'string' in result or 'type' in result
+        text = result.decode('utf-8') if isinstance(result, bytes) else result
+        assert isinstance(text, str)
+        assert 'string' in text or 'type' in text
     # ========================================================================
     # FILE I/O TESTS
     # ========================================================================
