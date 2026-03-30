@@ -66,6 +66,14 @@ Current phase: [docs/REF_22_PROJECT.md](docs/REF_22_PROJECT.md) or [docs/](docs/
 ## License and links
 
 MIT - see [LICENSE](LICENSE). **Homepage:** https://exonware.com · **Repository:** https://github.com/exonware/xwschema  
-Version: 0.4.0.5 | Updated: 31-Mar-2026
+
+## Async Support
+
+<!-- async-support:start -->
+- xwschema includes asynchronous execution paths in production code.
+- Source validation: 79 async def definitions and 64 await usages under src/.
+- Use async APIs for I/O-heavy or concurrent workloads to improve throughput and responsiveness.
+<!-- async-support:end -->
+Version: 0.4.0.6 | Updated: 31-Mar-2026
 
 *Built with ❤️ by eXonware.com - Revolutionizing Python Development Since 2025*

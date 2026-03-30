@@ -9,7 +9,7 @@ This module defines all the enums and types for the XWSchema system:
 Company: eXonware.com
 Author: eXonware Backend Team
 Email: connect@exonware.com
-Version: 0.4.0.5
+Version: 0.4.0.6
 Generation Date: 09-Nov-2025
 """
 
