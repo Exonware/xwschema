@@ -1,6 +1,9 @@
 # xwschema
 
-Schema validation and structure definitions: constraints, composition, evolution, and fast paths where implemented. Works with xwaction and the wider eXonware stack. Full detail is in project REF docs.
+**Define once, validate everywhere.**  
+`xwschema` lets you describe schema rules and validate data across different input formats and structures with one consistent validation layer.
+
+You can take schema definitions from common formats (for example JSON-style or XML-style representations), then validate heterogeneous payloads and models without rewriting validation logic per format.
 
 **Company:** eXonware.com · **Author:** eXonware Backend Team · **Email:** connect@exonware.com  
 
@@ -31,6 +34,15 @@ See [docs/](docs/) for usage, REF_*, and GUIDE_01_USAGE when present.
 
 ---
 
+## Why developers use xwschema
+
+- **Schema portability** - keep business validation rules stable while data formats vary.
+- **Cross-format validation** - validate different payload styles through one schema engine.
+- **Extensible model surface** - grow new format adapters and schema types without redesigning core validation.
+- **Works with your stack** - use standalone or pair with xwaction/xwdata workflows.
+
+---
+
 ## What you get
 
 | Area | Contents |
@@ -54,6 +66,6 @@ Current phase: [docs/REF_22_PROJECT.md](docs/REF_22_PROJECT.md) or [docs/](docs/
 ## License and links
 
 MIT - see [LICENSE](LICENSE). **Homepage:** https://exonware.com · **Repository:** https://github.com/exonware/xwschema  
-Version: 0.4.0.4 | Updated: 30-Mar-2026
+Version: 0.4.0.5 | Updated: 31-Mar-2026
 
 *Built with ❤️ by eXonware.com - Revolutionizing Python Development Since 2025*

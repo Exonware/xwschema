@@ -6,7 +6,7 @@ Provides multi-stage validation pipelines for complex validation workflows.
 Company: eXonware.com
 Author: eXonware Backend Team
 Email: connect@exonware.com
-Version: 0.4.0.4
+Version: 0.4.0.5
 Generation Date: 26-Jan-2026
 NOTE: This is an OPTIONAL module for BaaS platform integration.
 """

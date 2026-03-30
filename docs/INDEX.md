@@ -4,6 +4,16 @@
 
 Navigation hub for xwschema docs. Per GUIDE_41_DOCS and GUIDE_00_MASTER.
 
+## Why xwschema matters
+
+`xwschema` gives you a single validation layer across mixed schema and data representations.
+
+- Define and evolve schema rules once.
+- Validate different data formats and structures through one interface.
+- Extend format support without fragmenting validation logic.
+
+Start with [GUIDE_01_USAGE.md](GUIDE_01_USAGE.md) for developer workflow and [REF_15_API.md](REF_15_API.md) for API details.
+
 ## Requirements (source of truth)
 
 | Document | Purpose | Producing guide |

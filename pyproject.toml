@@ -1,6 +1,6 @@
 # project-src-size=360243 ; 0.34 MB
 # total = src + deps — refresh: run measure_dependency_sizes xwschema (monorepo tools/ci)
-# Source size (src/*): ~351.8 KB
+# Source size (src/*): ~352.5 KB
 [build-system]
   requires = ["hatchling"]
   build-backend = "hatchling.build"
