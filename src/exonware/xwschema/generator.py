@@ -7,7 +7,7 @@ Used by the engine; not part of public API.
 Company: eXonware.com
 Author: eXonware Backend Team
 Email: connect@exonware.com
-Version: 0.4.0.6
+Version: 0.4.0.7
 Generation Date: 09-Nov-2025
 """
 
