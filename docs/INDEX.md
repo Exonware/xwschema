@@ -21,6 +21,7 @@ Navigation hub for xwschema docs. Per GUIDE_41_DOCS and GUIDE_00_MASTER.
 | [REF_15_API.md](REF_15_API.md) | API reference (from REF_01_REQ sec. 6) | GUIDE_15_API |
 | [REF_21_PLAN.md](REF_21_PLAN.md) | Milestones and roadmap (from REF_01_REQ sec. 9) | GUIDE_21_PLAN |
 | [REF_22_PROJECT.md](REF_22_PROJECT.md) | Vision, requirements, milestones (from REF_01_REQ) | GUIDE_22_PROJECT |
+| [REF_50_QA.md](REF_50_QA.md) | Quality gates and release readiness | GUIDE_50_QA |
 | [REF_35_REVIEW.md](REF_35_REVIEW.md) | Review summary and status | GUIDE_35_REVIEW |
 | [REF_51_TEST.md](REF_51_TEST.md) | Test status and coverage (from REF_01_REQ sec. 8) | GUIDE_51_TEST |
 | [REF_54_BENCH.md](REF_54_BENCH.md) | Benchmarks and performance (from REF_01_REQ sec. 8; example + 3.advance) | GUIDE_54_BENCH |

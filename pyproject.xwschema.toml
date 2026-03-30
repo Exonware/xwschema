@@ -1,4 +1,4 @@
-# Source size (src/*): ~351.7 KB
+# Source size (src/*): ~351.8 KB
 [build-system]
 requires = [
     "hatchling",
@@ -33,11 +33,12 @@ authors = [
 text = "MIT"
 
 [project.optional-dependencies]
-dev = [
-    "exonware-xwschema[dev]",
-]
+    # GUIDE_42_CONFIG_PY: lazy → dev → full; each mode: xwlazy → xwsystem → other xw (A–Z) → dev tools / third-party
 lazy = [
     "exonware-xwschema[lazy]",
+]
+dev = [
+    "exonware-xwschema[dev]",
 ]
 full = [
     "exonware-xwschema[full]",

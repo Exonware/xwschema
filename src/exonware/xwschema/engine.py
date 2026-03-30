@@ -6,13 +6,15 @@ Orchestrates xwschema; load/save via xwdata (xwdata uses xwsystem for I/O). Vali
 Company: eXonware.com
 Author: eXonware Backend Team
 Email: connect@exonware.com
-Version: 0.4.0.3
+Version: 0.4.0.4
 Generation Date: 09-Nov-2025
 """
 
 from typing import Any
 from pathlib import Path
-import json as _json
+import errno
+from exonware.xwsystem.io.serialization.formats.text import json as _xw_json
+import os
 from exonware.xwsystem import get_logger
 from exonware.xwdata import XWData
 from .base import ASchemaEngine
@@ -25,6 +27,17 @@ from .errors import (
 from .validator import DefaultValidationStrategy
 from .generator import DefaultGenerationStrategy
 logger = get_logger(__name__)
+
+
+def _ensure_local_path_exists(source: str, is_url: bool) -> None:
+    """Raise FileNotFoundError for missing local paths before delegating I/O to xwdata."""
+    if is_url:
+        return
+    p = Path(source)
+    if not p.exists():
+        raise FileNotFoundError(errno.ENOENT, os.strerror(errno.ENOENT), str(p))
+
+
 # ==============================================================================
 # SCHEMA FORMAT EXTENSION MAPPING
 # ==============================================================================
@@ -135,7 +148,7 @@ class XWSchemaEngine(ASchemaEngine):
             if path_obj.is_file():
                 try:
                     with open(path_obj, encoding="utf-8") as f:
-                        schema_dict = _json.load(f)
+                        schema_dict = _xw_json.load(f)
                 except Exception as e:
                     raise XWSchemaParseError(
                         f"Failed to load JSON schema file: {e}",
@@ -143,10 +156,12 @@ class XWSchemaEngine(ASchemaEngine):
                         format=format.name,
                     ) from e
             else:
+                _ensure_local_path_exists(source, is_url)
                 format_hint = self._schema_format_to_str(format)
                 data = await XWData.load(source, format_hint=format_hint)
                 schema_dict = data.to_native()
         else:
+            _ensure_local_path_exists(source, is_url)
             format_hint = self._schema_format_to_str(format)
             data = await XWData.load(source, format_hint=format_hint)
             schema_dict = data.to_native()
@@ -198,7 +213,7 @@ class XWSchemaEngine(ASchemaEngine):
         if format == SchemaFormat.JSON_SCHEMA and not str(path_obj).startswith(("http://", "https://")):
             try:
                 with open(path_obj, "w", encoding="utf-8") as f:
-                    _json.dump(schema, f, indent=2)
+                    _xw_json.dump(schema, f, indent=2)
                 logger.debug(f"Saved schema to {path} (format: {format.name})")
                 return
             except Exception as e:

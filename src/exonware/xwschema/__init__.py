@@ -3,11 +3,23 @@ xwschema: Schema validation and data structure definition library
 Company: eXonware.com
 Author: eXonware Backend Team
 Email: connect@exonware.com
-Version: 0.4.0.3
+Version: 0.4.0.4
 Generation Date: 09-Nov-2025
 """
-# xwdata, xwsystem, xwquery are required; no fallbacks
+# xwlazy (lazy install hook), xwsystem, xwdata are required; no fallbacks
 # Public API
+
+# GUIDE_00_MASTER: lazy install registration (before other package imports)
+try:
+    from exonware.xwlazy import config_package_lazy_install_enabled
+
+    config_package_lazy_install_enabled(
+        __package__ or "exonware.xwschema",
+        enabled=True,
+        mode="smart",
+    )
+except ImportError:
+    pass
 
 from .facade import XWSchema
 from .defs import SchemaFormat, ValidationMode, SchemaGenerationMode, ConstraintType
