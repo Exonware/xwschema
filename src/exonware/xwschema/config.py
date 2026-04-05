@@ -7,7 +7,7 @@ and sensible defaults for different use cases.
 Company: eXonware.com
 Author: eXonware Backend Team
 Email: connect@exonware.com
-Version: 0.4.0.7
+Version: 0.4.0.8
 Generation Date: 09-Nov-2025
 """
 

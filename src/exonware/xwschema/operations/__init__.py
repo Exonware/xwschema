@@ -7,7 +7,7 @@ validation pipelines, and advanced schema transformations.
 Company: eXonware.com
 Author: eXonware Backend Team
 Email: connect@exonware.com
-Version: 0.4.0.7
+Version: 0.4.0.8
 Generation Date: 26-Jan-2026
 NOTE: This is an OPTIONAL module for BaaS platform integration.
 All features in this module are optional and do not break existing functionality.

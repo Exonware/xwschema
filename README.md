@@ -58,6 +58,25 @@ Current phase: [docs/REF_22_PROJECT.md](docs/REF_22_PROJECT.md) or [docs/](docs/
 
 ---
 
+## Ecosystem functional contributions
+
+`xwschema` provides validation contracts; sibling libs define where those contracts are applied in real systems.
+You can use `xwschema` standalone for schema definition and validation in any Python project.
+Integrating with the wider XW platform is optional and most useful for enterprise and mission-critical environments where validation must stay consistent across self-managed services.
+
+| Supporting XW lib | What it provides to xwschema usage | Functional requirement it satisfies |
+|------|----------------|----------------|
+| **XWAction** | Action input/output validation hooks tied to schema definitions. | Contract-safe automation and endpoint execution. |
+| **XWEntity** | Entity model contracts bound to schema rules. | Domain model correctness and controlled schema evolution. |
+| **XWData** | Format-agnostic data ingestion where schemas validate transformed payloads. | Cross-format validation without rewriting rule logic per format. |
+| **XWStorage** | Schema catalog/migration integration for persisted data systems. | Schema-on-write and migration governance for storage-backed workloads. |
+| **XWSystem** | Core runtime/error utility layer for validators and schema tooling. | Consistent validation behavior and diagnostics across stack packages. |
+| **XWAPI / XWAuth** | Request, response, and policy-rule validation at API/auth boundaries. | Safer public interfaces and security policy correctness. |
+
+Competitive edge: schema rules become a reusable platform contract across APIs, storage, entities, and workflows instead of living as isolated validators in each service.
+
+---
+
 ## Docs and tests
 
 - **Start:** [docs/INDEX.md](docs/INDEX.md) or [docs/](docs/).
@@ -76,6 +95,6 @@ MIT - see [LICENSE](LICENSE). **Homepage:** https://exonware.com · **Repository
 - Source validation: 79 async def definitions and 64 await usages under src/.
 - Use async APIs for I/O-heavy or concurrent workloads to improve throughput and responsiveness.
 <!-- async-support:end -->
-Version: 0.4.0.7 | Updated: 31-Mar-2026
+Version: 0.4.0.8 | Updated: 05-Apr-2026
 
 *Built with ❤️ by eXonware.com - Revolutionizing Python Development Since 2025*
