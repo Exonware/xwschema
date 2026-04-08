@@ -11,6 +11,7 @@ Generation Date: 09-Nov-2025
 """
 
 import sys
+import os
 from pathlib import Path
 # ⚠️ CRITICAL: Configure UTF-8 encoding for Windows console (GUIDE_TEST.md compliance)
 if sys.platform == "win32":
@@ -20,17 +21,29 @@ if sys.platform == "win32":
         sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
     except Exception:
         pass  # If reconfiguration fails, continue with default encoding
-# Add src to Python path for imports
-src_path = Path(__file__).parent.parent.parent / "src"
-sys.path.insert(0, str(src_path))
+
+def _package_root() -> Path:
+    """Folder with pyproject.toml + src/ (any tests/**/runner.py depth)."""
+    p = Path(__file__).resolve().parent
+    while p != p.parent:
+        if (p / "pyproject.toml").is_file() and (p / "src").is_dir():
+            return p
+        p = p.parent
+    raise RuntimeError("Could not locate package root from " + str(Path(__file__)))
+
+
+_PKG_ROOT = _package_root()
+
 from exonware.xwsystem.utils.test_runner import TestRunner
 
 if __name__ == "__main__":
+    os.chdir(_PKG_ROOT)
     runner = TestRunner(
         library_name="xwschema",
         layer_name="1.unit",
         description="Unit Tests - Individual Component Tests",
         test_dir=Path(__file__).parent,
+        pytest_cwd=_PKG_ROOT,
         markers=["xwschema_unit"]
     )
     sys.exit(runner.run())

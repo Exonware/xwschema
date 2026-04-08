@@ -1,128 +1,103 @@
-# project-src-size=360243 ; 0.34 MB
-# total = src + deps — refresh: run measure_dependency_sizes xwschema (monorepo tools/ci)
+
 # Source size (src/*): ~352.5 KB
 [build-system]
-  requires = ["hatchling"]
-  build-backend = "hatchling.build"
+requires = ["hatchling"]
+build-backend = "hatchling.build"
 
 [project]
-  name = "exonware-xwschema"
-  dynamic = ["version"]
-  description = "Schema validation and data structure definition library"
-  readme = "README.md"
-  requires-python = ">=3.12"
-  keywords = ["schema", "validation", "structure", "definition", "data-types", "exonware"]
-  classifiers = []
-  dependencies = [
-    "exonware-xwlazy",
-    "exonware-xwsystem",
-    "exonware-xwdata",
-  ]
-  authors = [{ name = "eXonware Backend Team", email = "connect@exonware.com" }]
+name = "exonware-xwschema"
+dynamic = ["version"]
+description = "Schema validation and data structure definition library"
+readme = "README.md"
+requires-python = ">=3.12"
+keywords = ["schema", "validation", "structure", "definition", "data-types", "exonware"]
+classifiers = []
+dependencies = [
+  "exonware-xwsystem",
+  "exonware-xwdata",
+]
+authors = [
+  { name = "eXonware Backend Team", email = "connect@exonware.com" },
+]
 
-  [project.license]
-    text = "MIT"
+[project.license]
+text = "Apache-2.0"
 
-  [project.optional-dependencies]
-    # GUIDE_42_CONFIG_PY: lazy → dev → full; each mode: xwlazy → xwsystem → other xw (A–Z) → dev tools / third-party
-    lazy = [
-      "exonware-xwlazy",
-      "exonware-xwsystem[lazy]",
-      "exonware-xwdata[lazy]",
-    ]
-    dev = [
-      "exonware-xwlazy",
-      "exonware-xwsystem[dev]",
-      "exonware-xwdata[dev]",
-      "black>=23.0.0",
-      "isort>=5.12.0",
-      "mypy>=1.0.0",
-      "pytest>=7.0.0",
-      "pytest-asyncio>=0.21.0",
-      "pytest-cov>=4.0.0",
-    ]
-    full = [
-      "exonware-xwdata[full]",
-      "atomicwrites",
-      "awscrt",
-      "bottleneck",
-      "brotlicffi",
-      "chardet",
-      "cloudpickle",
-      "cython",
-      "interegular",
-      "lz4",
-      "numexpr",
-      "numpy",
-      "pandas",
-      "pyarrow",
-      "pytz",
-      "regex",
-      "scikit-learn",
-      "simplejson",
-      "socks",
-      "uarray",
-    ]
+[project.optional-dependencies]
+# First-party XW libs composed by this package (excludes exonware-xwsystem; see lazy/full).
+xw = [
+  "exonware-xwdata",
+]
+lazy = [
+  "exonware-xwschema[xw]",
+  "exonware-xwlazy",
+  "exonware-xwsystem[lazy]",
+  "exonware-xwdata[xw]",
+]
+full = [
+  "exonware-xwschema[xw]",
+  "exonware-xwsystem[full]",
+  "exonware-xwdata[xw]",
+]
+dev = [
+  "exonware-xwschema[full]",
+  "black>=23.0.0",
+  "isort>=5.12.0",
+  "mypy>=1.0.0",
+  "pytest>=7.0.0",
+  "pytest-asyncio>=0.21.0",
+  "pytest-cov>=4.0.0",
+]
 
-  [project.urls]
-    Homepage = "https://exonware.com"
-    Repository = "https://github.com/exonware/xwschema"
-    Documentation = "https://github.com/exonware/xwschema#readme"
-    Subtree = "https://github.com/exonware/xwschema.git"
+[project.urls]
+Homepage = "https://exonware.com"
+Repository = "https://github.com/exonware/xwschema"
+Documentation = "https://github.com/exonware/xwschema#readme"
+Subtree = "https://github.com/exonware/xwschema.git"
 
-  [project.entry-points."xwsystem.schema_validators"]
-    xwschema = "exonware.xwschema.validator:get_schema_validator"
+[project.entry-points."xwsystem.schema_validators"]
+xwschema = "exonware.xwschema.validator:get_schema_validator"
 
-[tool]
+[tool.black]
+line-length = 88
+target-version = ["py312"]
 
-  [tool.black]
-    line-length = 88
-    target-version = ["py312"]
+[tool.isort]
+profile = "black"
+line_length = 88
 
-  [tool.isort]
-    profile = "black"
-    line_length = 88
+[tool.mypy]
+python_version = "3.12"
+mypy_path = "src"
+strict = true
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = true
+disallow_any_generics = true
+disallow_untyped_calls = true
+disallow_incomplete_defs = true
+check_untyped_defs = true
+disallow_untyped_decorators = true
+no_implicit_optional = true
+warn_redundant_casts = true
+warn_unused_ignores = true
+warn_no_return = true
+warn_unreachable = true
 
-  [tool.mypy]
-    python_version = "3.12"
-    mypy_path = "src"
-    strict = true
-    warn_return_any = true
-    warn_unused_configs = true
-    disallow_untyped_defs = true
-    disallow_any_generics = true
-    disallow_untyped_calls = true
-    disallow_incomplete_defs = true
-    check_untyped_defs = true
-    disallow_untyped_decorators = true
-    no_implicit_optional = true
-    warn_redundant_casts = true
-    warn_unused_ignores = true
-    warn_no_return = true
-    warn_unreachable = true
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+addopts = "-v --tb=short -x --strict-markers"
+markers = []
 
-  [tool.pytest]
+[tool.hatch.version]
+path = "src/exonware/xwschema/version.py"
 
-    [tool.pytest.ini_options]
-      testpaths = ["tests"]
-      python_files = ["test_*.py"]
-      python_classes = ["Test*"]
-      python_functions = ["test_*"]
-      addopts = "-v --tb=short -x --strict-markers"
-      markers = []
+[tool.hatch.build.targets.wheel]
+packages = ["src/exonware"]
+py-modules = ["src/xwschema"]
 
-  [tool.hatch]
-
-    [tool.hatch.version]
-      path = "src/exonware/xwschema/version.py"
-
-    [tool.hatch.build]
-
-      [tool.hatch.build.targets]
-
-        [tool.hatch.build.targets.wheel]
-          packages = ["src/exonware"]
-          py-modules = ["src/xwschema"]
-
-        [tool.hatch.build.targets.sdist]
-          include = ["/src", "/tests", "/README.md", "/.github"]
+[tool.hatch.build.targets.sdist]
+include = ["/src", "/tests", "/README.md", "/.github"]

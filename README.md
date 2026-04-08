@@ -9,11 +9,11 @@ You can take schema definitions from common formats (for example JSON-style or X
 
 [![Status](https://img.shields.io/badge/status-beta-blue.svg)](https://exonware.com)
 [![Python](https://img.shields.io/badge/python-3.12%2B-blue.svg)](https://www.python.org)
-[![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
+[![License](https://img.shields.io/badge/license-Apache%202.0-blue.svg)](LICENSE)
 
 ---
 
-## Install
+## 📦 Install
 
 ```bash
 pip install exonware-xwschema
@@ -23,7 +23,7 @@ pip install exonware-xwschema[full]
 
 ---
 
-## Quick start
+## 🚀 Quick start
 
 ```python
 from exonware.xwschema import *
@@ -36,7 +36,7 @@ See [docs/](docs/) for usage, REF_*, and GUIDE_01_USAGE when present.
 
 ---
 
-## Why developers use xwschema
+## 🎯 Why developers use xwschema
 
 - **Schema portability** - keep business validation rules stable while data formats vary.
 - **Cross-format validation** - validate different payload styles through one schema engine.
@@ -45,7 +45,7 @@ See [docs/](docs/) for usage, REF_*, and GUIDE_01_USAGE when present.
 
 ---
 
-## What you get
+## ✨ What you get
 
 | Area | Contents |
 |------|----------|
@@ -58,7 +58,7 @@ Current phase: [docs/REF_22_PROJECT.md](docs/REF_22_PROJECT.md) or [docs/](docs/
 
 ---
 
-## Ecosystem functional contributions
+## 🌐 Ecosystem functional contributions
 
 `xwschema` provides validation contracts; sibling libs define where those contracts are applied in real systems.
 You can use `xwschema` standalone for schema definition and validation in any Python project.
@@ -77,24 +77,24 @@ Competitive edge: schema rules become a reusable platform contract across APIs, 
 
 ---
 
-## Docs and tests
+## 📖 Docs and tests
 
 - **Start:** [docs/INDEX.md](docs/INDEX.md) or [docs/](docs/).
 - **Tests:** From repo root per project layout.
 
 ---
 
-## License and links
+## 📜 License and links
 
-MIT - see [LICENSE](LICENSE). **Homepage:** https://exonware.com · **Repository:** https://github.com/exonware/xwschema  
+Apache-2.0 - see [LICENSE](LICENSE). **Homepage:** https://exonware.com · **Repository:** https://github.com/exonware/xwschema  
 
-## Async Support
+## ⏱️ Async Support
 
 <!-- async-support:start -->
 - xwschema includes asynchronous execution paths in production code.
 - Source validation: 79 async def definitions and 64 await usages under src/.
 - Use async APIs for I/O-heavy or concurrent workloads to improve throughput and responsiveness.
 <!-- async-support:end -->
-Version: 0.4.0.8 | Updated: 05-Apr-2026
+Version: 0.4.0.9 | Updated: 08-Apr-2026
 
 *Built with ❤️ by eXonware.com - Revolutionizing Python Development Since 2025*

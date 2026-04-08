@@ -30,18 +30,21 @@ authors = [
 ]
 
 [project.license]
-text = "MIT"
+text = "Apache-2.0"
 
 [project.optional-dependencies]
-    # GUIDE_42_CONFIG_PY: lazy → dev → full; each mode: xwlazy → xwsystem → other xw (A–Z) → dev tools / third-party
+# First-party XW libs composed by this package (excludes exonware-xwsystem; see lazy/full).
+xw = [
+    "exonware-xwschema[xw]",
+]
 lazy = [
     "exonware-xwschema[lazy]",
 ]
-dev = [
-    "exonware-xwschema[dev]",
-]
 full = [
     "exonware-xwschema[full]",
+]
+dev = [
+    "exonware-xwschema[dev]",
 ]
 
 [project.urls]

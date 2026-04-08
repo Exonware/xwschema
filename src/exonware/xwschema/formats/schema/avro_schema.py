@@ -7,7 +7,7 @@ Avro DATA serialization uses XWAvroSerializer from xwformats (binary format).
 Company: eXonware.com
 Author: eXonware Backend Team
 Email: connect@exonware.com
-Version: 0.4.0.8
+Version: 0.4.0.9
 Generation Date: 09-Nov-2025
 """
 
