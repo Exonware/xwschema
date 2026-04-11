@@ -2,7 +2,7 @@
 Company: eXonware.com
 Author: eXonware Backend Team
 Email: connect@exonware.com
-Version: 0.4.0.10
+Version: 0.4.0.11
 Generation Date: September 04, 2025
 Schema Registry Integration for Enterprise Serialization
 Provides integration with enterprise schema registries for:

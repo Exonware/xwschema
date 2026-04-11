@@ -6,7 +6,7 @@ Provides bidirectional conversion between class types and string representations
 Company: eXonware.com
 Author: eXonware Backend Team
 Email: connect@exonware.com
-Version: 0.4.0.10
+Version: 0.4.0.11
 Generation Date: 30-Dec-2025
 """
 
