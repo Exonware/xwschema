@@ -8,7 +8,7 @@ Entry point get_schema_validator() returns XWSchema({}).
 Company: eXonware.com
 Author: eXonware Backend Team
 Email: connect@exonware.com
-Version: 0.4.0.11
+Version: 0.4.0.12
 Generation Date: 09-Nov-2025
 """
 
