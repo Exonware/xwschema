@@ -3,7 +3,7 @@ xwschema: Schema validation and data structure definition library
 Company: eXonware.com
 Author: eXonware Backend Team
 Email: connect@exonware.com
-Version: 0.4.0.16
+Version: 0.4.0.17
 Generation Date: 09-Nov-2025
 """
 # xwlazy (lazy install hook), xwsystem, xwdata are required; no fallbacks

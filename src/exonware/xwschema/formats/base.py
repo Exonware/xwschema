@@ -8,7 +8,7 @@ different schema formats while maintaining semantic meaning.
 Company: eXonware.com
 Author: eXonware Backend Team
 Email: connect@exonware.com
-Version: 0.4.0.16
+Version: 0.4.0.17
 Generation Date: 09-Nov-2025
 """
 
