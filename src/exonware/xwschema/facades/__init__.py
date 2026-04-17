@@ -6,7 +6,7 @@ This module contains facades for BaaS platform integration.
 Company: eXonware.com
 Author: eXonware Backend Team
 Email: connect@exonware.com
-Version: 0.4.0.14
+Version: 0.4.0.15
 Generation Date: 26-Jan-2026
 NOTE: This is an OPTIONAL module for BaaS platform integration.
 """

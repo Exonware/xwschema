@@ -7,7 +7,7 @@ from xwsystem.io.serialization and add JSON Schema validation.
 Company: eXonware.com
 Author: eXonware Backend Team
 Email: connect@exonware.com
-Version: 0.4.0.14
+Version: 0.4.0.15
 Generation Date: 09-Nov-2025
 """
 
