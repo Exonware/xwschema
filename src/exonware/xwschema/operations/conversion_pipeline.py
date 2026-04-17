@@ -6,7 +6,7 @@ Provides multi-step schema conversion pipelines for complex conversion workflows
 Company: eXonware.com
 Author: eXonware Backend Team
 Email: connect@exonware.com
-Version: 0.4.0.12
+Version: 0.4.0.14
 Generation Date: 26-Jan-2026
 NOTE: This is an OPTIONAL module for BaaS platform integration.
 """

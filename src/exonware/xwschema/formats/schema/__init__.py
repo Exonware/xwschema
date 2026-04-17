@@ -14,7 +14,7 @@ Provides serializers for various schema definition formats:
 Company: eXonware.com
 Author: eXonware Backend Team
 Email: connect@exonware.com
-Version: 0.4.0.12
+Version: 0.4.0.14
 Generation Date: 09-Nov-2025
 """
 

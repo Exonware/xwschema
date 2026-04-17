@@ -18,7 +18,7 @@ This module fully reuses ecosystem libraries:
 Company: eXonware.com
 Author: eXonware Backend Team
 Email: connect@exonware.com
-Version: 0.4.0.12
+Version: 0.4.0.14
 Generation Date: 09-Nov-2025
 """
 
@@ -38,7 +38,13 @@ from exonware.xwdata import XWData
 from .base import ASchema
 from .config import XWSchemaConfig
 from .engine import XWSchemaEngine
-from .defs import SchemaFormat, ValidationMode, SchemaGenerationMode
+from .defs import (
+    SchemaFormat,
+    ValidationMode,
+    SchemaGenerationMode,
+    XW_EXONWARE_BUILTIN_ID_KEY,
+    XW_EXONWARE_KIND_ALIASES_KEY,
+)
 from .errors import XWSchemaError, XWSchemaValidationError, XWSchemaParseError
 from .builder import XWSchemaBuilder
 from .type_utils import normalize_schema_dict, class_to_string, string_to_class
@@ -91,15 +97,32 @@ class XWSchema(ASchema):
         super().__init__(config=config)
         self._config = config or XWSchemaConfig.default()
         self._engine = XWSchemaEngine(self._config)
+        exon_builtin_id: str | None = None
+        exon_kind_aliases: list[str] | None = None
         # Multi-type handling
         if isinstance(schema, dict):
             # Normalize schema dict - convert class types to strings for storage
             # This allows users to use: {"type": XWSchema} or {"type": "exonware.xwschema.XWSchema"}
-            normalized_schema = normalize_schema_dict(schema)
+            normalized_schema = normalize_schema_dict(dict(schema))
+            exon_builtin_id = normalized_schema.pop(XW_EXONWARE_BUILTIN_ID_KEY, None)
+            exon_aliases_raw = normalized_schema.pop(XW_EXONWARE_KIND_ALIASES_KEY, None)
+            if exon_aliases_raw is not None:
+                if isinstance(exon_aliases_raw, (list, tuple)):
+                    exon_kind_aliases = list(exon_aliases_raw)
+                else:
+                    exon_kind_aliases = [str(exon_aliases_raw)]
+            if exon_builtin_id is not None:
+                exon_builtin_id = str(exon_builtin_id)
             # xwdata is the base engine: XWData for schema storage (path-based access, query, format-agnostic)
             self._schema_data = XWData.from_native(normalized_schema, metadata=metadata)
             self._schema_dict = normalized_schema
             self._format = SchemaFormat.JSON_SCHEMA  # Default to JSON Schema
+            if metadata:
+                self._metadata.update(metadata)
+            if exon_builtin_id is not None:
+                self._metadata["builtin_kind_id"] = exon_builtin_id
+            if exon_kind_aliases is not None:
+                self._metadata["kind_aliases"] = list(exon_kind_aliases)
         elif isinstance(schema, (str, Path)):
             self._schema_dict = self._sync_load_file(str(schema))
             self._schema_data = XWData.from_native(self._schema_dict)
@@ -128,10 +151,12 @@ class XWSchema(ASchema):
                 suggestion=f"Provide schema as dict, file path, XWSchema instance, or XWData instance, not {type(schema).__name__}"
             )
         self._data = self._schema_data
-        # Semantic id from schema $id / id (never use uid)
+        # Semantic id from schema $id / id (never use uid); else catalog ``x-exonware-builtin-id``.
         schema_id = self._schema_dict.get("$id") or self._schema_dict.get("id")
         if schema_id is not None:
             self._id = str(schema_id)
+        elif exon_builtin_id is not None:
+            self._id = exon_builtin_id
         logger.debug(f"XWSchema initialized (format: {self._format.name if self._format else 'unknown'})")
 
     def _sync_load_file(self, path: str) -> dict[str, Any]:
@@ -966,6 +991,13 @@ class XWSchema(ASchema):
             Schema dictionary compatible with XWSchema
         """
         from typing import get_origin, get_args, Any as TypingAny
+        tid = getattr(param_type, "__kind_id__", None)
+        if isinstance(tid, str) and tid.strip():
+            from exonware.xwschema.types_base import kind_for
+
+            spec = kind_for(tid.strip())
+            if spec is not None:
+                return dict(spec.to_native())
         schema: dict[str, Any] = {}
         # Handle None type
         if param_type is None or param_type is type(None):

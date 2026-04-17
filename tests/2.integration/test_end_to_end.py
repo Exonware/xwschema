@@ -19,6 +19,7 @@ import json
 from pathlib import Path
 from exonware.xwschema import XWSchema
 from exonware.xwschema.defs import SchemaFormat
+from exonware.xwschema.errors import XWSchemaError
 @pytest.mark.xwschema_integration
 
 class TestEndToEndWorkflows:
@@ -308,13 +309,11 @@ class TestEndToEndWorkflows:
     @pytest.mark.asyncio
 
     async def test_error_handling_invalid_schema(self):
-        """Test error handling for invalid schema structure."""
-        # Invalid schema should be handled gracefully
-        try:
-            schema = XWSchema('not a dict')
-            # Should either raise error or handle gracefully
-        except Exception:
-            pass  # Expected
+        """Test error handling for invalid schema input (unsupported Python type)."""
+        # Avoid passing a bare ``str`` here: that is treated as a filesystem path and can
+        # surface asyncio warnings during engine load; unsupported types raise immediately.
+        with pytest.raises(XWSchemaError, match="Cannot create XWSchema"):
+            XWSchema(object())  # type: ignore[arg-type]
     @pytest.mark.asyncio
 
     async def test_error_handling_validation_errors(self):

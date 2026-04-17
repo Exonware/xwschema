@@ -9,11 +9,16 @@ This module defines all the enums and types for the XWSchema system:
 Company: eXonware.com
 Author: eXonware Backend Team
 Email: connect@exonware.com
-Version: 0.4.0.12
+Version: 0.4.0.14
 Generation Date: 09-Nov-2025
 """
 
 from enum import Enum, Flag, auto as _auto
+
+# Extension keys for built-in catalog rows (stripped from stored JSON Schema, copied into XWSchema._metadata).
+XW_EXONWARE_BUILTIN_ID_KEY = "x-exonware-builtin-id"
+XW_EXONWARE_KIND_ALIASES_KEY = "x-exonware-kind-aliases"
+
 # ==============================================================================
 # SCHEMA FORMATS
 # ==============================================================================
