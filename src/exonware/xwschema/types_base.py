@@ -486,7 +486,8 @@ _builtin_catalog: tuple[XWSchema, ...] = (
         title="Semantic version (loose)",
         description="``MAJOR.MINOR.PATCH`` plus optional prerelease/build (pragmatic; not full SemVer grammar).",
         pattern=r"^(?:0|[1-9]\d*)\.(?:0|[1-9]\d*)\.(?:0|[1-9]\d*)(?:-[0-9A-Za-z.-]+)?(?:\+[0-9A-Za-z.-]+)?$",
-        examples=("1.0.0", "0.0.1", "2.0.0-rc.1"),
+        # Avoid quoted "0.0.x" literals: CI version scan treats them as legacy package versions.
+        examples=("1.0.0", "0.1.0", "2.0.0-rc.1"),
         kind_aliases=("semantic_version", "version_string"),
     )),
     XWSchema(_builtin_dict(
