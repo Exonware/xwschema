@@ -7,7 +7,7 @@ Supports all OpenAPI/JSON Schema properties.
 Company: eXonware.com
 Author: eXonware Backend Team
 Email: connect@exonware.com
-Version: 0.4.0.15
+Version: 0.4.0.16
 Generation Date: 09-Nov-2025
 """
 
