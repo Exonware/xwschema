@@ -5,7 +5,7 @@ Schema Registry Error Classes
 Company: eXonware.com
 Author: eXonware Backend Team
 Email: connect@exonware.com
-Version: 0.4.0.18
+Version: 0.4.0.19
 Generation Date: 09-Nov-2025
 """
 

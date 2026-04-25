@@ -51,7 +51,7 @@ See [docs/](docs/) for usage, REF_*, and GUIDE_01_USAGE when present.
 |------|----------|
 | **Validation** | Constraint checks and structured errors. |
 | **Schema** | Dynamic composition, evolution, versioning. |
-| **Schema catalog** | DDL-style helpers (`create_schema`, `alter_schema`, `drop_schema`) and **apply_migration** for evolution; JSON-backed catalog for schema-on-write with xwstorage/XWDB. See [docs/REF_15_API.md](docs/REF_15_API.md). |
+| **Schema catalog** | DDL-style helpers (`create_schema`, `alter_schema`, `drop_schema`) and **apply_migration** for evolution; JSON-backed catalog for schema-on-write with xwstorage/XWStorageDb. See [docs/REF_15_API.md](docs/REF_15_API.md). |
 | **Integration** | xwaction workflows and other eXonware packages. |
 
 Current phase: [docs/REF_22_PROJECT.md](docs/REF_22_PROJECT.md) or [docs/](docs/).
@@ -95,6 +95,6 @@ Apache-2.0 - see [LICENSE](LICENSE). **Homepage:** https://exonware.com · **Rep
 - Source validation: 79 async def definitions and 64 await usages under src/.
 - Use async APIs for I/O-heavy or concurrent workloads to improve throughput and responsiveness.
 <!-- async-support:end -->
-Version: 0.4.0.18 | Updated: 18-Apr-2026
+Version: 0.4.0.19 | Updated: 25-Apr-2026
 
 *Built with ❤️ by eXonware.com - Revolutionizing Python Development Since 2025*

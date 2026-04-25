@@ -1,4 +1,4 @@
-# Source size (src/*): ~402.4 KB
+# Source size (src/*): ~410.5 KB
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"
@@ -12,7 +12,7 @@ requires-python = ">=3.12"
 keywords = ["schema", "validation", "structure", "definition", "data-types", "exonware"]
 classifiers = []
 dependencies = [
-  "exonware-xwsystem==0.9.0.39",
+  "exonware-xwsystem==0.9.0.43",
   "exonware-xwdata==0.9.0.17",
 ]
 authors = [
@@ -28,18 +28,18 @@ xw = [
   "exonware-xwdata==0.9.0.17",
 ]
 lazy = [
-  "exonware-xwschema[xw]==0.4.0.17",
-  "exonware-xwlazy==1.0.1.81",
-  "exonware-xwsystem[lazy]==0.9.0.39",
+  "exonware-xwschema[xw]==0.4.0.18",
+  "exonware-xwlazy==1.0.1.82",
+  "exonware-xwsystem[lazy]==0.9.0.43",
   "exonware-xwdata[xw]==0.9.0.17",
 ]
 full = [
-  "exonware-xwschema[xw]==0.4.0.17",
-  "exonware-xwsystem[full]==0.9.0.39",
+  "exonware-xwschema[xw]==0.4.0.18",
+  "exonware-xwsystem[full]==0.9.0.43",
   "exonware-xwdata[xw]==0.9.0.17",
 ]
 dev = [
-  "exonware-xwschema[full]==0.4.0.17",
+  "exonware-xwschema[full]==0.4.0.18",
   "black>=23.0.0",
   "isort>=5.12.0",
   "mypy>=1.0.0",

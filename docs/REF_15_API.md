@@ -53,7 +53,7 @@ Engine, format handler implementations, registry internals, and pipeline impleme
 - **drop_schema(name)** — DROP equivalent.
 - **get_schema(name)**, **get_schema_version(name)** (returns version or None), **list_schemas()** — read API.
 
-This provides **schema-on-write** when used with XWDB or any validate-on-write flow: pass a SchemaCatalog instance as the `schema` option (e.g. XWDB(schema=catalog)); writes are validated against the catalog before persistence. Integrate with xwstorage/xwquery by passing a SchemaCatalog instance as the `schema` option for validate-on-write. See tests in `tests/1.unit/registry_tests/test_catalog.py`.
+This provides **schema-on-write** when used with XWStorageDb or any validate-on-write flow: pass a SchemaCatalog instance as the `schema` option (e.g. XWStorageDb(schema=catalog)); writes are validated against the catalog before persistence. Integrate with xwstorage/xwquery by passing a SchemaCatalog instance as the `schema` option for validate-on-write. See tests in `tests/1.unit/registry_tests/test_catalog.py`.
 
 **Schema migrations.** Use **apply_migration(catalog, name, definition_updates)** (from `xwschema.registry`) to evolve a schema in one step: it deep-merges `definition_updates` into the schema definition and bumps the version via `alter_schema`. Use for adding properties, changing `required`, or other definition changes. Raises if the schema does not exist. **diff_schema_definitions(old_def, new_def)** returns a list of `(path, change_type, old_val, new_val)` with change_type in `"added"`, `"removed"`, `"changed"` for migration audit and tooling. Tests: `tests/1.unit/registry_tests/test_catalog.py` (TestApplyMigration, TestDiffSchemaDefinitions).
 
@@ -66,7 +66,7 @@ This provides **schema-on-write** when used with XWDB or any validate-on-write f
 - **xwsystem:** Logging, I/O, XWObject (facade extends it).
 - **xwdata:** Load/save, path-based schema—base of the engine; used by facade and engine.
 - **xwquery:** Schema query (e.g. XWData.query).
-- **xwstorage/XWDB:** Optional SchemaCatalog or XWSchema for schema-on-write.
+- **xwstorage/XWStorageDb:** Optional SchemaCatalog or XWSchema for schema-on-write.
 - **Entry point:** `xwsystem.schema_validators` for xwsystem consumers (e.g. xwdata).
 
 ---

@@ -3,7 +3,7 @@ xwschema: Schema validation and data structure definition library
 Company: eXonware.com
 Author: eXonware Backend Team
 Email: connect@exonware.com
-Version: 0.4.0.18
+Version: 0.4.0.19
 Generation Date: 09-Nov-2025
 """
 # xwlazy (lazy install hook), xwsystem, xwdata are required; no fallbacks
@@ -33,6 +33,15 @@ from .defs import (
 from .config import XWSchemaConfig, ValidationConfig, GenerationConfig, PerformanceConfig
 from .builder import XWSchemaBuilder
 from .validator import ValidationIssue
+from .base_types import (
+    BASE_TYPES,
+    BaseType,
+    base_type_ids,
+    by_category,
+    extend_with,
+    find as find_base_type,
+    list_base_types,
+)
 from .type_utils import class_to_string, string_to_class, normalize_type, normalize_schema_dict
 from .types_base import (
     BuiltinKind,
@@ -126,6 +135,14 @@ __all__ = [
     'XWSchema',
     'XWSchemaBuilder',
     'ValidationIssue',
+    # Canonical base-type catalogue (extend with product-specific types)
+    'BaseType',
+    'BASE_TYPES',
+    'base_type_ids',
+    'by_category',
+    'extend_with',
+    'find_base_type',
+    'list_base_types',
     # Built-in logical kinds (``types_base``): canonical names
     'BuiltinKind',
     'string_kind',

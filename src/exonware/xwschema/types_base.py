@@ -450,7 +450,7 @@ _builtin_catalog: tuple[XWSchema, ...] = (
     )),
     XWSchema(_builtin_dict(
         id="boolean_json",
-        title="JSON boolean",
+        title="JsonBoolean",
         description="Native JSON ``true`` / ``false`` (not a string token).",
         json_type="boolean",
         examples=(True, False),
@@ -649,7 +649,7 @@ _builtin_catalog: tuple[XWSchema, ...] = (
     )),
     XWSchema(_builtin_dict(
         id="json_integer_open",
-        title="JSON integer (unbounded)",
+        title="JsonIntegerUnbounded",
         description="OpenAPI-style ``integer`` without min/max (validate ranges in your domain layer if needed).",
         json_type="integer",
         examples=(1, 42, -7),
@@ -657,7 +657,7 @@ _builtin_catalog: tuple[XWSchema, ...] = (
     )),
     XWSchema(_builtin_dict(
         id="json_number_open",
-        title="JSON number (float/double)",
+        title="JsonNumber",
         description="OpenAPI-style ``number`` (IEEE-754 JSON number).",
         json_type="number",
         examples=(1.25, -0.5, 3.0),
@@ -665,7 +665,7 @@ _builtin_catalog: tuple[XWSchema, ...] = (
     )),
     XWSchema(_builtin_dict(
         id="json_array",
-        title="JSON array (untyped items)",
+        title="JsonArray",
         description="``array`` with permissive ``items: {}`` (lists/tags/attachments). Prefer tighter ``items`` in real schemas.",
         json_type="array",
         items_schema={},
@@ -674,7 +674,7 @@ _builtin_catalog: tuple[XWSchema, ...] = (
     )),
     XWSchema(_builtin_dict(
         id="json_object",
-        title="JSON object (map / dictionary)",
+        title="JsonObject",
         description="``object`` with ``additionalProperties: true`` (metadata/settings/webhook bodies). Prefer explicit ``properties`` in real schemas.",
         json_type="object",
         additional_properties=True,

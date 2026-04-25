@@ -17,10 +17,10 @@
 # =============================================================================
 # CORE DEPENDENCIES
 # =============================================================================
-# Source size (src/*): ~402.4 KB
+# Source size (src/*): ~410.5 KB
 pip                     # Package installer (CI and lazy install)
-exonware-xwlazy==1.0.1.81             # Lazy install (GUIDE_00_MASTER; config_package_lazy_install_enabled)
-exonware-xwsystem==0.9.0.39           # Foundation library
+exonware-xwlazy==1.0.1.82             # Lazy install (GUIDE_00_MASTER; config_package_lazy_install_enabled)
+exonware-xwsystem==0.9.0.43           # Foundation library
 exonware-xwdata==0.9.0.17             # Schema load/save and conversion (no direct xwjson)
 
 # Schema Registry Support
