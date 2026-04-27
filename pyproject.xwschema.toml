@@ -10,7 +10,7 @@ name = "xwschema"
 dynamic = [
     "version",
 ]
-description = "Convenience wrapper for exonware-xwschema - provides 'import xwschema' alias"
+description = "Convenience wrapper for exonware-xwschema==0.4.0.19 - provides 'import xwschema' alias"
 readme = "README.md"
 requires-python = ">=3.12"
 keywords = [
@@ -23,7 +23,7 @@ keywords = [
 ]
 classifiers = []
 dependencies = [
-    "exonware-xwschema",
+    "exonware-xwschema==0.4.0.19",
 ]
 authors = [
     { name = "eXonware Backend Team", email = "connect@exonware.com" },
@@ -35,16 +35,16 @@ text = "Apache-2.0"
 [project.optional-dependencies]
 # First-party XW libs composed by this package (excludes exonware-xwsystem==0.9.0.37; see lazy/full).
 xw = [
-    "exonware-xwschema[xw]",
+    "exonware-xwschema[xw]==0.4.0.19",
 ]
 lazy = [
-    "exonware-xwschema[lazy]",
+    "exonware-xwschema[lazy]==0.4.0.19",
 ]
 full = [
-    "exonware-xwschema[full]",
+    "exonware-xwschema[full]==0.4.0.19",
 ]
 dev = [
-    "exonware-xwschema[dev]",
+    "exonware-xwschema[dev]==0.4.0.19",
 ]
 
 [project.urls]

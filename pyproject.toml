@@ -13,7 +13,7 @@ keywords = ["schema", "validation", "structure", "definition", "data-types", "ex
 classifiers = []
 dependencies = [
   "exonware-xwsystem==0.9.0.43",
-  "exonware-xwdata==0.9.0.17",
+  "exonware-xwdata==0.9.0.18",
 ]
 authors = [
   { name = "eXonware Backend Team", email = "connect@exonware.com" },
@@ -25,21 +25,21 @@ text = "Apache-2.0"
 [project.optional-dependencies]
 # First-party XW libs composed by this package (excludes exonware-xwsystem==0.9.0.37; see lazy/full).
 xw = [
-  "exonware-xwdata==0.9.0.17",
+  "exonware-xwdata==0.9.0.18",
 ]
 lazy = [
-  "exonware-xwschema[xw]==0.4.0.18",
+  "exonware-xwschema[xw]==0.4.0.19",
   "exonware-xwlazy==1.0.1.82",
   "exonware-xwsystem[lazy]==0.9.0.43",
-  "exonware-xwdata[xw]==0.9.0.17",
+  "exonware-xwdata[xw]==0.9.0.18",
 ]
 full = [
-  "exonware-xwschema[xw]==0.4.0.18",
+  "exonware-xwschema[xw]==0.4.0.19",
   "exonware-xwsystem[full]==0.9.0.43",
-  "exonware-xwdata[xw]==0.9.0.17",
+  "exonware-xwdata[xw]==0.9.0.18",
 ]
 dev = [
-  "exonware-xwschema[full]==0.4.0.18",
+  "exonware-xwschema[full]==0.4.0.19",
   "black>=23.0.0",
   "isort>=5.12.0",
   "mypy>=1.0.0",
